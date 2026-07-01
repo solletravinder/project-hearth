@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Models
+backend/models/*.gguf
+backend/models/*.onnx
+backend/models/*.bin
+
+# Data
+backend/data/
+!backend/data/.gitkeep
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.env
+
+# Logs
+*.log
+eval/results/
