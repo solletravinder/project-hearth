@@ -34,8 +34,9 @@ async def create_document(
     mime_type: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
     word_count: int = 0,
+    doc_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    doc_id = _new_id()
+    doc_id = doc_id or _new_id()
     now = _now()
     conn = await get_db()
     try:
