@@ -64,7 +64,8 @@ export interface Citation {
 
 export interface ChatRequest {
   conversation_id: string;
-  message: string;
+  query: string;
+  context_docs?: string[];
 }
 
 export interface ChatResponse {
@@ -91,7 +92,10 @@ export interface Note {
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   ollama_base_url: string;
+  openai_base_url: string;
   default_model: string;
+  embedding_provider: 'local' | 'ollama' | 'openai';
+  chat_provider: 'local' | 'ollama' | 'openai';
   system_prompt: string;
   max_tokens: number;
   temperature: number;

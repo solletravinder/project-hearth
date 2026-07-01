@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 
 from app.storage.repository import (
     create_conversation,

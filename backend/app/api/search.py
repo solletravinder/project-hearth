@@ -1,7 +1,5 @@
 """Hybrid search: FTS5 + vector (vector stub for Phase 2)."""
 
-from typing import Optional
-
 from fastapi import APIRouter, Query
 
 from app.storage.database import get_db
@@ -12,8 +10,8 @@ router = APIRouter(prefix="/api/search")
 @router.get("/")
 async def search(
     q: str = Query(..., min_length=1),
-    doc_type: Optional[str] = None,
-    folder: Optional[str] = None,
+    doc_type: str | None = None,  # noqa: ARG001 — reserved for future filtering
+    folder: str | None = None,  # noqa: ARG001 — reserved for future filtering
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=10, ge=1, le=100),
 ):

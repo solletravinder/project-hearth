@@ -81,7 +81,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       const res = await chatApi.send({
         conversation_id: convId,
-        message: query,
+        query,
       });
 
       const assistantMessage: Message = {

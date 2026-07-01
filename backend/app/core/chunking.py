@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import hashlib
-from typing import List
 
 
-def chunk_by_characters(
-    text: str, max_chars: int = 2000, overlap: int = 200
-) -> List[dict]:
+def chunk_by_characters(text: str, max_chars: int = 2000, overlap: int = 200) -> list[dict]:
     """Split text into overlapping chunks by character count."""
     if not text:
         return []
 
-    chunks: List[dict] = []
+    chunks: list[dict] = []
     start = 0
     text_len = len(text)
 
@@ -41,13 +38,13 @@ def chunk_by_tokens(
     tokenizer,
     max_tokens: int = 512,
     overlap: int = 64,
-) -> List[dict]:
+) -> list[dict]:
     """Split text into overlapping chunks by token count using a tokenizer."""
     if not text:
         return []
 
     tokens = tokenizer.encode(text)
-    chunks: List[dict] = []
+    chunks: list[dict] = []
     start = 0
     token_len = len(tokens)
 

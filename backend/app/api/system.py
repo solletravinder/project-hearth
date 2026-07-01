@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app import __version__
 from app.models.manager import model_manager
 from app.storage.database import check_db_health
 
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/api/system")
 async def health():
     db_health = await check_db_health()
     return {
-        "version": "0.1.0",
+        "version": __version__,
         "status": "ok",
         "database": db_health,
         "models": model_manager.get_status(),

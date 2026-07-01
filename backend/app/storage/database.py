@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import aiosqlite
-from pathlib import Path
-from typing import Optional
 
 from app.config import settings
 
@@ -26,9 +24,13 @@ async def init_db() -> None:
             CREATE TABLE IF NOT EXISTS documents (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
-                doc_type TEXT NOT NULL CHECK(doc_type IN ('pdf','epub','markdown','audio','text','html','image','other')),
+                doc_type TEXT NOT NULL
+                    CHECK(doc_type IN (
+                        'pdf','epub','markdown','audio','text','html','image','other'
+                    )),
                 folder TEXT DEFAULT 'default',
-                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','ready','error','indexed','failed')),
+                status TEXT NOT NULL DEFAULT 'pending'
+                    CHECK(status IN ('pending','processing','ready','error','indexed','failed')),
                 file_path TEXT,
                 file_size INTEGER DEFAULT 0,
                 mime_type TEXT,
@@ -116,6 +118,24 @@ async def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_trace_log_level ON trace_log(level);
             CREATE INDEX IF NOT EXISTS idx_trace_log_component ON trace_log(component);
+
+            -- Default settings (inserted only if key doesn't exist)
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'system');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('ollama_base_url', 'http://localhost:11434');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('openai_base_url', 'http://localhost:11434/v1');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('default_model', 'llama3.2');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('embedding_provider', 'local');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('chat_provider', 'ollama');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('system_prompt', '');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('max_tokens', '2048');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('temperature', '0.7');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('top_k', '40');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('top_p', '0.9');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('embedding_model', 'gte-small');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('chunk_size', '2000');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('chunk_overlap', '200');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('search_result_count', '5');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('pii_filter_enabled', 'false');
         """)
         await conn.commit()
     finally:

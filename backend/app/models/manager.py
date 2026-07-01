@@ -1,32 +1,33 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
 class ModelEntry:
     name: str
     status: str = "unloaded"  # unloaded | loading | ready | error
-    loaded_at: Optional[datetime] = None
+    loaded_at: datetime | None = None
     memory_mb: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     ttl_seconds: int = 900  # 15 min default
 
 
 class ModelManager:
-    _instance: Optional["ModelManager"] = None
+    _instance: ModelManager | None = None
     _models: dict[str, ModelEntry] = {}
     _instances: dict[str, Any] = {}  # actual loaded model objects
-    _active_profile: Optional[str] = None
+    _active_profile: str | None = None
 
-    def __new__(cls) -> "ModelManager":
+    def __new__(cls) -> ModelManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_model(self, name: str) -> Optional[Any]:
+    def get_model(self, name: str) -> Any | None:
         return self._instances.get(name)
 
     def register_model(self, name: str, entry: ModelEntry) -> None:
@@ -42,7 +43,7 @@ class ModelManager:
             instance = await loader()
             self._instances[name] = instance
             entry.status = "ready"
-            entry.loaded_at = datetime.now(timezone.utc)
+            entry.loaded_at = datetime.now(UTC)
         except Exception as e:
             entry.status = "error"
             entry.error = str(e)

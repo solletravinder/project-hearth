@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import os
-import shutil
 from pathlib import Path
-from typing import Optional
 
 import aiofiles
 
@@ -29,7 +27,7 @@ async def save_file(
 async def read_file(
     filename: str,
     subdir: str = "uploads",
-) -> Optional[bytes]:
+) -> bytes | None:
     """Read a file from the data directory. Returns None if not found."""
     file_path = settings.data_dir / subdir / filename
     if not file_path.exists():

@@ -13,9 +13,31 @@ dependencies = [
     "python-multipart>=0.0.12",
     "aiofiles>=24.0.0",
     "aiosqlite>=0.20.0",
+    "httpx>=0.28.0",
 ]
 [project.optional-dependencies]
-dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "pytest-cov>=5.0.0", "httpx>=0.28.0"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "pytest-cov>=5.0.0", "httpx>=0.28.0", "ruff>=0.7.0", "mypy>=1.13.0"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [".venv", "migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG", "C4", "T20"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["T20"]
+"app/providers/base.py" = ["ARG"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+exclude = [".venv/", "migrations/"]
+warn_unused_ignores = true
+no_implicit_optional = true
+warn_redundant_casts = true
+check_untyped_defs = true

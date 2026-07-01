@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
-
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from app.config import settings
 from app.models.manager import model_manager
+from app.providers.registry import provider_registry
 
 router = APIRouter(prefix="/api/models")
 
@@ -17,14 +16,27 @@ class ProfileRequest(BaseModel):
 
 @router.get("/status")
 async def model_status():
-    """Return loaded models status."""
-    return model_manager.get_status()
+    """Return loaded models + provider status."""
+    provider_status = await provider_registry.get_status()
+    return {
+        "models": model_manager.get_status(),
+        "providers": provider_status,
+        "active_profile": settings.active_profile,
+        "chunk_size": settings.active_chunk_size,
+        "chunk_overlap": settings.active_chunk_overlap,
+    }
+
+
+@router.get("/providers")
+async def get_providers():
+    """Return provider availability."""
+    return await provider_registry.get_status()
 
 
 @router.get("/profiles")
 async def get_profiles():
     """Return available performance profiles."""
-    return {"profiles": settings.profiles}
+    return {"profiles": settings.profiles, "active": settings.active_profile}
 
 
 @router.post("/profile")

@@ -2,19 +2,22 @@
 
 import logging
 import struct
-from typing import TypedDict, Literal, Optional, Any
+from typing import Literal, TypedDict
 
 import aiofiles
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
+from app.config import settings
 from app.core.chunking import chunk_by_characters
-from app.models.embedding_model import embedding_service
 from app.models.trocr_model import trocr_service
 from app.models.whisper_model import whisper_service
+from app.providers.registry import provider_registry
 from app.storage.repository import create_chunk, rebuild_fts, update_document_status
 
 try:
-    import fitz  # type: ignore
+    import fitz
+
     HAS_FITZ = True
 except ImportError:
     HAS_FITZ = False
@@ -27,9 +30,9 @@ class IngestionState(TypedDict):
     document_title: str
     file_path: str
     doc_type: str
-    raw_text: Optional[str]
+    raw_text: str | None
     chunks: list[dict]
-    error: Optional[str]
+    error: str | None
     status: str  # processing | done | error
 
 
@@ -47,14 +50,14 @@ async def extract_text(state: IngestionState) -> dict:
 
     try:
         if doc_type == "text" or doc_type == "note":
-            async with aiofiles.open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            async with aiofiles.open(file_path, encoding="utf-8", errors="replace") as f:
                 raw_text = await f.read()
 
         elif doc_type == "pdf":
             if HAS_FITZ:
                 try:
                     doc = fitz.open(file_path)
-                    raw_text = "\n".join(page.get_text() for page in doc)
+                    raw_text = "\n".join([str(page.get_text()) for page in doc])
                     doc.close()
                 except Exception:
                     raw_text = f"[Mock PDF extraction of {state['document_title']}]"
@@ -82,7 +85,11 @@ def chunk_text(state: IngestionState) -> dict:
     if not raw_text:
         return {"chunks": [], "status": "error", "error": "No text to chunk"}
 
-    chunk_dicts = chunk_by_characters(raw_text, max_chars=2000, overlap=200)
+    chunk_dicts = chunk_by_characters(
+        raw_text,
+        max_chars=settings.active_chunk_size,
+        overlap=settings.active_chunk_overlap,
+    )
     chunks = []
     for i, c in enumerate(chunk_dicts):
         chunks.append(
@@ -104,7 +111,8 @@ async def embed_chunks(state: IngestionState) -> dict:
         return {"chunks": []}
 
     texts = [c["content"] for c in chunks]
-    embeddings = await embedding_service.embed(texts)
+    embedding_provider = provider_registry.get_embedding()
+    embeddings = await embedding_provider.embed(texts)
 
     for i, emb in enumerate(embeddings):
         chunks[i]["embedding"] = emb
@@ -150,7 +158,7 @@ def should_continue(state: IngestionState) -> Literal["continue", "error"]:
     return "continue"
 
 
-def build_ingestion_graph() -> StateGraph:
+def build_ingestion_graph() -> CompiledStateGraph:
     """Build and return the ingestion LangGraph."""
     workflow = StateGraph(IngestionState)
 

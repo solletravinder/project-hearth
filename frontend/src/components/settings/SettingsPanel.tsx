@@ -68,6 +68,38 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                   General
                 </h3>
                 <div className="space-y-3">
+                  {/* Embedding provider */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Embedding Provider
+                    </label>
+                    <select
+                      value={settings?.embedding_provider ?? 'local'}
+                      onChange={(e) => updateSettings({ embedding_provider: e.target.value as 'local' | 'ollama' | 'openai' })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-hearth-600 bg-white dark:bg-hearth-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-hearth-400"
+                    >
+                      <option value="local">Local (sentence-transformers)</option>
+                      <option value="ollama">Ollama</option>
+                      <option value="openai">OpenAI-compatible (llama.cpp, LocalAI)</option>
+                    </select>
+                  </div>
+
+                  {/* Chat provider */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Chat Provider
+                    </label>
+                    <select
+                      value={settings?.chat_provider ?? 'ollama'}
+                      onChange={(e) => updateSettings({ chat_provider: e.target.value as 'local' | 'ollama' | 'openai' })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-hearth-600 bg-white dark:bg-hearth-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-hearth-400"
+                    >
+                      <option value="local">Mock (no real provider)</option>
+                      <option value="ollama">Ollama</option>
+                      <option value="openai">OpenAI-compatible (llama.cpp, LocalAI)</option>
+                    </select>
+                  </div>
+
                   {/* Ollama base URL */}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -79,6 +111,20 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       onChange={(e) => updateSettings({ ollama_base_url: e.target.value })}
                       className="w-full rounded-lg border border-gray-300 dark:border-hearth-600 bg-white dark:bg-hearth-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-hearth-400"
                       placeholder="http://localhost:11434"
+                    />
+                  </div>
+
+                  {/* OpenAI-compatible base URL */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      OpenAI-compatible URL
+                    </label>
+                    <input
+                      type="text"
+                      value={settings?.openai_base_url ?? ''}
+                      onChange={(e) => updateSettings({ openai_base_url: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-hearth-600 bg-white dark:bg-hearth-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-hearth-400"
+                      placeholder="http://localhost:11434/v1"
                     />
                   </div>
 

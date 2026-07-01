@@ -1,8 +1,5 @@
 """Tests for ingestion pipeline with mock data."""
 
-import os
-import shutil
-
 import pytest
 
 from app.config import settings
@@ -46,9 +43,9 @@ async def test_ingest_text(tmp_path):
     )
     assert result["status"] in ("done", "error"), f"Pipeline failed: {result.get('error')}"
     if result["status"] == "done":
-        doc = await get_document("test-doc-1")
-        assert doc is not None
-        assert doc["status"] == "ready"
+        updated = await get_document("test-doc-1")
+        assert updated is not None
+        assert updated["status"] == "ready"
 
     # Clean up
     if result.get("status") == "error":

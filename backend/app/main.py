@@ -5,30 +5,30 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
-from app.storage.database import init_db
-
-from app.api import documents as documents_router
+from app import __version__
 from app.api import chat as chat_router
-from app.api import notes as notes_router
 from app.api import conversations as conversations_router
+from app.api import documents as documents_router
+from app.api import models_api as models_router
+from app.api import notes as notes_router
 from app.api import search as search_router
 from app.api import settings as settings_router
-from app.api import models_api as models_router
 from app.api import system as system_router
+from app.config import settings
+from app.storage.database import init_db
 
 
 def create_app() -> FastAPI:
     """Application factory."""
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(_app: FastAPI):  # noqa: ARG001
         await init_db()
         yield
 
     app = FastAPI(
         title="Hearth API",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
     )
 

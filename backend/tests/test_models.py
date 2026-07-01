@@ -1,12 +1,11 @@
 """Tests for model wrappers - mock/fallback behavior without downloading models."""
 
 import pytest
-import random
 
-from app.models.embedding_model import EmbeddingService, EMBEDDING_DIM
-from app.models.whisper_model import WhisperService
+from app.models.embedding_model import EMBEDDING_DIM, EmbeddingService
+from app.models.ner_model import NERService
 from app.models.trocr_model import TROCRService
-from app.models.ner_model import NERService, PII_PATTERNS
+from app.models.whisper_model import WhisperService
 
 
 @pytest.mark.asyncio
@@ -103,6 +102,7 @@ async def test_ner_no_pii():
 async def test_model_manager_singleton():
     """Test ModelManager is a singleton."""
     from app.models.manager import ModelManager, model_manager
+
     m1 = ModelManager()
     m2 = ModelManager()
     assert m1 is m2
@@ -112,7 +112,7 @@ async def test_model_manager_singleton():
 @pytest.mark.asyncio
 async def test_model_manager_load_unload():
     """Test ModelManager load/unload cycle."""
-    from app.models.manager import ModelManager, model_manager
+    from app.models.manager import ModelManager
 
     mgr = ModelManager()
 
@@ -135,7 +135,7 @@ async def test_model_manager_load_unload():
 @pytest.mark.asyncio
 async def test_model_manager_register():
     """Test ModelManager register_model."""
-    from app.models.manager import ModelManager, ModelEntry
+    from app.models.manager import ModelEntry, ModelManager
 
     mgr = ModelManager()
     entry = ModelEntry(name="my_model", memory_mb=256.0)

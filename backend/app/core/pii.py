@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Tuple
 
 
-def redact_patterns(text: str) -> Tuple[str, List[dict]]:
+def redact_patterns(text: str) -> tuple[str, list[dict]]:
     """Redact common PII patterns (email, phone, SSN) using regex.
 
     Returns (redacted_text, detections) where detections is a list of
     dicts with keys: pattern_type, original, start, end.
     """
-    detections: List[dict] = []
+    detections: list[dict] = []
 
     patterns = {
         "email": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
@@ -35,9 +34,7 @@ def redact_patterns(text: str) -> Tuple[str, List[dict]]:
     return redacted, detections
 
 
-def redact_with_ner(
-    text: str, ner_model=None
-) -> Tuple[str, List[dict]]:
+def redact_with_ner(text: str, ner_model=None) -> tuple[str, list[dict]]:
     """Redact PII using an NER model (spaCy or similar).
 
     If no model is provided, falls back to pattern-based redaction.
@@ -46,7 +43,7 @@ def redact_with_ner(
     if ner_model is None:
         return redact_patterns(text)
 
-    detections: List[dict] = []
+    detections: list[dict] = []
     doc = ner_model(text)
     redacted = text
 

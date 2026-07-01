@@ -67,7 +67,9 @@ def test_model_status():
         assert resp.status_code == 200
         data = resp.json()
         assert "models" in data
-        assert "loaded_count" in data
+        assert "loaded_count" in data["models"]
+        assert "providers" in data
+        assert "active_profile" in data
 
 
 def test_document_upload():

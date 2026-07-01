@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import List, Optional
-
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 
 from app.storage.repository import (
     create_note,
@@ -20,23 +18,23 @@ class CreateNoteRequest(BaseModel):
     title: str
     content: str = ""
     folder: str = "default"
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
     pinned: bool = False
-    source_document_id: Optional[str] = None
+    source_document_id: str | None = None
 
 
 class UpdateNoteRequest(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    folder: Optional[str] = None
-    tags: Optional[List[str]] = None
-    pinned: Optional[bool] = None
+    title: str | None = None
+    content: str | None = None
+    folder: str | None = None
+    tags: list[str] | None = None
+    pinned: bool | None = None
 
 
 @router.get("/")
 async def list_notes_endpoint(
-    folder: Optional[str] = None,
-    pinned: Optional[bool] = None,
+    folder: str | None = None,
+    pinned: bool | None = None,
     page: int = 1,
     per_page: int = 50,
 ):

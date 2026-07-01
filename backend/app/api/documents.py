@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
@@ -48,7 +47,7 @@ def _infer_type(filename: str) -> str:
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload_document(file: UploadFile = File(...), folder: str = "default"):
+async def upload_document(file: UploadFile = File(...), folder: str = "default"):  # noqa: B008
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
@@ -85,9 +84,9 @@ async def upload_document(file: UploadFile = File(...), folder: str = "default")
 
 @router.get("/")
 async def list_docs(
-    folder: Optional[str] = None,
-    doc_type: Optional[str] = None,
-    status: Optional[str] = None,
+    folder: str | None = None,
+    doc_type: str | None = None,
+    status: str | None = None,
     page: int = 1,
     per_page: int = 50,
 ):

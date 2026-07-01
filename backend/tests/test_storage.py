@@ -8,7 +8,6 @@ from app.storage.repository import (
     create_document,
     create_message,
     create_note,
-    get_conversation,
     get_document,
     get_messages,
     get_note,

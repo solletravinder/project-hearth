@@ -4,7 +4,6 @@ import type {
   Message,
   Note,
   AppSettings,
-  ModelStatus,
   ChatRequest,
   ChatResponse,
 } from '@/types';
@@ -222,8 +221,25 @@ export const settings = {
 
 /* ── Models API ──────────────────────────────────────────────── */
 
+interface ModelEntryInfo {
+  status: string;
+  loaded_at: string | null;
+  memory_mb: number;
+  error: string | null;
+}
+
+interface ModelStatusResponse {
+  models: {
+    models: Record<string, ModelEntryInfo>;
+    active_profile: string | null;
+    loaded_count: number;
+  };
+  providers: Record<string, unknown>;
+  active_profile: string;
+}
+
 export const models = {
-  status(): Promise<{ models: ModelStatus[] }> {
+  status(): Promise<ModelStatusResponse> {
     return request('/models/status');
   },
 

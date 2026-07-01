@@ -14,7 +14,7 @@ def test_chunk_by_characters(sample_text):
     assert all("token_count" in c for c in chunks)
     assert all("content_hash" in c for c in chunks)
 
-    joined = "".join(c["content"] for c in chunks)
+    joined = "".join([c["content"] for c in chunks])
     assert len(joined) >= len(sample_text)
 
 

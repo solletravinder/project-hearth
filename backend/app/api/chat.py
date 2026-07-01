@@ -1,29 +1,33 @@
 from __future__ import annotations
 
-from typing import List, Optional
+import logging
 
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
+from app.config import settings
+from app.providers.registry import provider_registry
 from app.storage.repository import (
     create_conversation,
     create_message,
-    get_messages,
     get_conversation,
+    get_messages,
 )
 
 router = APIRouter(prefix="/api/chat")
 
+logger = logging.getLogger(__name__)
+
 
 class ChatRequest(BaseModel):
     query: str
-    conversation_id: Optional[str] = None
-    context_docs: Optional[List[str]] = None
+    conversation_id: str | None = None
+    context_docs: list[str] | None = None
 
 
 class RegenerateRequest(BaseModel):
     conversation_id: str
-    message_id: Optional[str] = None
+    message_id: str | None = None
 
 
 class BranchRequest(BaseModel):
@@ -50,11 +54,28 @@ async def chat(body: ChatRequest):
         context_docs=body.context_docs,
     )
 
-    mock_response = f"This is a mock assistant response to: '{body.query[:50]}...'"
+    # Try provider-based chat, fall back to mock
+    provider = provider_registry.get_chat()
+    if provider is not None:
+        try:
+            messages = [{"role": "user", "content": body.query}]
+            profile = settings.profiles.get(settings.active_profile, {})
+            temperature = profile.get("temperature", 0.7)
+            response = await provider.chat(
+                messages=messages,
+                model=settings.default_model,
+                temperature=temperature,
+            )
+        except Exception as e:
+            logger.error("Chat provider failed: %s; falling back to mock", e)
+            response = "[Assistant unavailable]"
+    else:
+        response = f"This is a mock assistant response to: '{body.query[:50]}...'"
+
     msg = await create_message(
         conversation_id=conv_id,
         role="assistant",
-        content=mock_response,
+        content=response,
     )
 
     messages = await get_messages(conv_id)
@@ -71,12 +92,29 @@ async def regenerate(body: RegenerateRequest):
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    # Stub: regenerate the last assistant message
-    mock_response = "This is a regenerated mock assistant response."
+    provider = provider_registry.get_chat()
+    if provider is not None:
+        try:
+            last_messages = await get_messages(body.conversation_id, limit=10)
+            provider_messages = [
+                {"role": m["role"], "content": m["content"]}
+                for m in last_messages
+                if m["role"] in ("user", "assistant", "system")
+            ]
+            response = await provider.chat(
+                messages=provider_messages,
+                model=settings.default_model,
+            )
+        except Exception as e:
+            logger.error("Regeneration failed: %s; falling back to mock", e)
+            response = "This is a regenerated mock assistant response."
+    else:
+        response = "This is a regenerated mock assistant response."
+
     msg = await create_message(
         conversation_id=body.conversation_id,
         role="assistant",
-        content=mock_response,
+        content=response,
     )
     return {"message": msg}
 

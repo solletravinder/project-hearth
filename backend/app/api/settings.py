@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict
-
-from pydantic import BaseModel
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.storage.repository import get_settings, update_setting
 
@@ -11,7 +9,7 @@ router = APIRouter(prefix="/api/settings")
 
 
 class UpdateSettingsRequest(BaseModel):
-    settings: Dict[str, str]
+    settings: dict[str, str]
 
 
 @router.get("/")

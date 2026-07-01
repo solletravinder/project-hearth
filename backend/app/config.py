@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict
+from typing import Literal
 
 from pydantic_settings import BaseSettings
 
@@ -13,15 +13,50 @@ class Settings(BaseSettings):
     models_dir: Path = Path("models")
     cors_origins: list[str] = ["http://localhost:5173"]
 
-    profiles: Dict[str, Dict[str, int | float]] = {
+    profiles: dict[str, dict[str, int | float]] = {
         "fast": {"chunk_size": 1000, "chunk_overlap": 100},
         "balanced": {"chunk_size": 2000, "chunk_overlap": 200},
         "accurate": {"chunk_size": 500, "chunk_overlap": 50},
     }
 
+    # Active performance profile
+    active_profile: str = "balanced"
+
+    # Local model names
+    embedding_model: str = "gte-small"
+    whisper_model: str = "base"
+    trocr_model: str = "microsoft/trocr-base-printed"
+    ner_model: str = "en_core_web_sm"
+
+    # Provider selection
+    default_model: str = "llama3.2"
+    embedding_provider: Literal["local", "ollama", "openai"] = "local"
+    chat_provider: Literal["local", "ollama", "openai"] = "ollama"
+
+    # Remote provider URLs
+    ollama_base_url: str = "http://localhost:11434"
+    openai_base_url: str = "http://localhost:11434/v1"
+
+    # Device and compute
+    device: str = "cpu"
+
     @property
     def resolved_db_path(self) -> Path:
         return self.data_dir / "hearth.db"
+
+    @property
+    def active_chunk_size(self) -> int:
+        profile = self.profiles.get(self.active_profile)
+        if profile:
+            return int(profile.get("chunk_size", 2000))
+        return 2000
+
+    @property
+    def active_chunk_overlap(self) -> int:
+        profile = self.profiles.get(self.active_profile)
+        if profile:
+            return int(profile.get("chunk_overlap", 200))
+        return 200
 
     model_config = {"env_prefix": "HEARTH_"}
 

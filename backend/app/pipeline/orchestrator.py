@@ -2,7 +2,7 @@
 
 import logging
 
-from app.pipeline.ingest_workflow import build_ingestion_graph, IngestionState
+from app.pipeline.ingest_workflow import IngestionState, build_ingestion_graph
 from app.storage.repository import update_document_status
 
 logger = logging.getLogger(__name__)
@@ -17,9 +17,7 @@ def get_ingestion_graph():
     return _ingestion_graph
 
 
-async def run_ingestion(
-    document_id: str, file_path: str, doc_type: str, title: str
-) -> dict:
+async def run_ingestion(document_id: str, file_path: str, doc_type: str, title: str) -> dict:
     """Run the ingestion pipeline for a document."""
     try:
         initial_state: IngestionState = {
