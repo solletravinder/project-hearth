@@ -177,6 +177,21 @@ async def create_chunk(
         await conn.close()
 
 
+async def rebuild_fts() -> bool:
+    """Rebuild the FTS5 index from the chunks table.
+    Only works with external content FTS5 tables.
+    """
+    conn = await get_db()
+    try:
+        await conn.execute("INSERT INTO chunks_fts(chunks_fts) VALUES('rebuild')")
+        await conn.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        await conn.close()
+
+
 # ─── Conversations ─────────────────────────────────────────────────────────────
 
 

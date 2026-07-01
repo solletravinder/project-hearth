@@ -5,7 +5,7 @@ from typing import TypedDict, Literal, Optional, Any
 
 from langgraph.graph import StateGraph, END
 
-from app.storage.repository import create_chunk, update_document_status
+from app.storage.repository import create_chunk, rebuild_fts, update_document_status
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +127,9 @@ async def store_chunks(state: IngestionState) -> dict:
             content_hash=chunk["content_hash"],
             embedding=emb_bytes,
         )
+
+    # Rebuild FTS index after storing all chunks
+    await rebuild_fts()
 
     await update_document_status(doc_id, "ready")
     return {"status": "done"}
