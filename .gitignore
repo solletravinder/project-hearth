@@ -11,7 +11,7 @@ backend/models/*.onnx
 backend/models/*.bin
 
 # Data
-backend/data/
+backend/data/*
 !backend/data/.gitkeep
 
 # Node
