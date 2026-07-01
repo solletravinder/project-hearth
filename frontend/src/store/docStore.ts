@@ -1,22 +1,26 @@
 import { create } from 'zustand';
-import type { Document } from '@/types';
-import { documents as documentsApi } from '@/api/client';
+import { apiClient } from '@/api/client';
+import type { Document, UploadProgress } from '@/types';
 
 interface DocState {
   documents: Document[];
   selectedDoc: Document | null;
-  uploadProgress: number;
-  isUploading: boolean;
   isLoading: boolean;
   error: string | null;
+  uploadProgress: UploadProgress | null;
+  isUploading: boolean;
+  pollingInterval: number | null;
 }
 
 interface DocActions {
-  fetchDocuments: (folder?: string) => Promise<void>;
-  uploadFiles: (files: FileList | File[], folder?: string) => Promise<void>;
-  deleteDocument: (id: string) => Promise<void>;
-  reindexDocument: (id: string) => Promise<void>;
+  fetchDocuments: (params?: { folder?: string; status?: string; doc_type?: string }) => Promise<void>;
   selectDocument: (doc: Document | null) => void;
+  uploadFiles: (files: File[], folder?: string) => Promise<void>;
+  deleteDocument: (id: string) => Promise<void>;
+  batchDelete: (ids: string[]) => Promise<void>;
+  reindexDocument: (id: string) => Promise<void>;
+  startPolling: () => void;
+  stopPolling: () => void;
 }
 
 type DocStore = DocState & DocActions;
@@ -24,65 +28,111 @@ type DocStore = DocState & DocActions;
 export const useDocStore = create<DocStore>((set, get) => ({
   documents: [],
   selectedDoc: null,
-  uploadProgress: 0,
-  isUploading: false,
   isLoading: false,
   error: null,
+  uploadProgress: null,
+  isUploading: false,
+  pollingInterval: null,
 
-  fetchDocuments: async (folder?: string) => {
+  fetchDocuments: async (params) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await documentsApi.list({ folder });
-      set({ documents: res.documents, isLoading: false, error: null });
-    } catch {
-      set({ isLoading: false, error: 'Failed to load documents' });
+      const data = await apiClient.documents.list(params);
+      set({ documents: data.items, isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to fetch documents',
+        isLoading: false,
+      });
     }
   },
 
-  uploadFiles: async (files: FileList | File[], folder?: string) => {
-    set({ isUploading: true, uploadProgress: 0, error: null });
-    const fileArr = Array.from(files);
-    let uploaded = 0;
+  selectDocument: (doc) => set({ selectedDoc: doc }),
 
+  uploadFiles: async (files, folder = 'default') => {
+    set({
+      isUploading: true,
+      uploadProgress: { loaded: 0, total: files.reduce((a, f) => a + f.size, 0) },
+    });
     try {
-      for (const file of fileArr) {
-        await documentsApi.upload(file, folder);
-        uploaded++;
-        set({ uploadProgress: Math.round((uploaded / fileArr.length) * 100) });
+      for (const file of files) {
+        await apiClient.documents.upload(file, folder);
       }
-      set({ isUploading: false, uploadProgress: 100 });
-      await get().fetchDocuments(folder);
-    } catch {
-      set({ isUploading: false, error: 'Upload failed' });
+      set({ isUploading: false, uploadProgress: null });
+      await get().fetchDocuments();
+      get().startPolling();
+    } catch (err) {
+      set({
+        isUploading: false,
+        uploadProgress: null,
+        error: err instanceof Error ? err.message : 'Upload failed',
+      });
     }
   },
 
-  deleteDocument: async (id: string) => {
+  deleteDocument: async (id) => {
     try {
-      await documentsApi.delete(id);
-      set((s) => ({
-        documents: s.documents.filter((d) => d.id !== id),
-        selectedDoc: s.selectedDoc?.id === id ? null : s.selectedDoc,
-        error: null,
+      await apiClient.documents.delete(id);
+      set((state) => ({
+        documents: state.documents.filter((d) => d.id !== id),
+        selectedDoc: state.selectedDoc?.id === id ? null : state.selectedDoc,
       }));
-    } catch {
-      set({ error: 'Failed to delete document' });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Delete failed' });
     }
   },
 
-  reindexDocument: async (id: string) => {
+  batchDelete: async (ids) => {
     try {
-      const updated = await documentsApi.reindex(id);
-      set((s) => ({
-        documents: s.documents.map((d) => (d.id === id ? updated : d)),
-        error: null,
+      await apiClient.documents.batchDelete(ids);
+      set((state) => ({
+        documents: state.documents.filter((d) => !ids.includes(d.id)),
+        selectedDoc: state.selectedDoc && ids.includes(state.selectedDoc.id) ? null : state.selectedDoc,
       }));
-    } catch {
-      set({ error: 'Failed to reindex document' });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Batch delete failed' });
     }
   },
 
-  selectDocument: (doc: Document | null) => {
-    set({ selectedDoc: doc });
+  reindexDocument: async (id) => {
+    try {
+      await apiClient.documents.reindex(id);
+      await get().fetchDocuments();
+      get().startPolling();
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Reindex failed' });
+    }
+  },
+
+  startPolling: () => {
+    const existing = get().pollingInterval;
+    if (existing) return;
+    const interval = window.setInterval(async () => {
+      await get().fetchDocuments();
+      const { documents } = get();
+      const hasProcessing = documents.some(
+        (d) => d.status === 'pending' || d.status === 'processing',
+      );
+      if (!hasProcessing) {
+        get().stopPolling();
+      }
+    }, 2000);
+    set({ pollingInterval: interval });
+  },
+
+  stopPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval !== null) {
+      clearInterval(pollingInterval);
+      set({ pollingInterval: null });
+    }
   },
 }));
+
+// Clean up polling on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    const { pollingInterval } = useDocStore.getState();
+    if (pollingInterval !== null) clearInterval(pollingInterval);
+  });
+}

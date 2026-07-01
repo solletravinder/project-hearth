@@ -42,15 +42,23 @@ async function request<T>(
 
 interface ListDocsParams {
   folder?: string;
+  doc_type?: string;
   status?: string;
   page?: number;
   per_page?: number;
 }
 
+interface ListDocsResponse {
+  items: Document[];
+  page: number;
+  per_page: number;
+}
+
 export const documents = {
-  list(params?: ListDocsParams): Promise<{ documents: Document[]; total: number }> {
+  list(params?: ListDocsParams): Promise<ListDocsResponse> {
     const qs = new URLSearchParams();
     if (params?.folder) qs.set('folder', params.folder);
+    if (params?.doc_type) qs.set('doc_type', params.doc_type);
     if (params?.status) qs.set('status', params.status);
     if (params?.page) qs.set('page', String(params.page));
     if (params?.per_page) qs.set('per_page', String(params.per_page));
@@ -66,7 +74,7 @@ export const documents = {
     const form = new FormData();
     form.append('file', file);
     if (folder) form.append('folder', folder);
-    return request('/documents', {
+    return request('/documents/upload', {
       method: 'POST',
       body: form,
     });
@@ -76,8 +84,49 @@ export const documents = {
     return request(`/documents/${id}`, { method: 'DELETE' });
   },
 
+  batchDelete(ids: string[]): Promise<void> {
+    return request('/documents/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  download(id: string): string {
+    return `/api/documents/${id}/download`;
+  },
+
   reindex(id: string): Promise<Document> {
     return request(`/documents/${id}/reindex`, { method: 'POST' });
+  },
+};
+
+/* ── Search API ─────────────────────────────────────────────── */
+
+interface SearchParams {
+  q: string;
+  doc_type?: string;
+  folder?: string;
+  page?: number;
+  per_page?: number;
+}
+
+interface SearchResponse {
+  items: Document[];
+  total: number;
+  page: number;
+  per_page: number;
+  query: string;
+}
+
+export const search = {
+  query(params: SearchParams): Promise<SearchResponse> {
+    const qs = new URLSearchParams();
+    qs.set('q', params.q);
+    if (params.doc_type) qs.set('doc_type', params.doc_type);
+    if (params.folder) qs.set('folder', params.folder);
+    if (params.page) qs.set('page', String(params.page));
+    if (params.per_page) qs.set('per_page', String(params.per_page));
+    return request(`/search/?${qs.toString()}`);
   },
 };
 
@@ -185,4 +234,15 @@ export const models = {
   unload(name: string): Promise<void> {
     return request(`/models/${encodeURIComponent(name)}/unload`, { method: 'POST' });
   },
+};
+
+/** Aggregated client with all API modules under one namespace. */
+export const apiClient = {
+  documents,
+  conversations,
+  chat,
+  notes,
+  settings,
+  models,
+  search,
 };

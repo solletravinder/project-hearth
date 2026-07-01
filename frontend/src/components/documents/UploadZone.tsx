@@ -1,84 +1,101 @@
-import { useRef, useState, useCallback } from 'react';
-import { ProgressBar } from '@/components/common/ProgressBar';
+import { useCallback, useRef, useState } from 'react';
+import { useDocStore } from '@/store/docStore';
 
-interface UploadZoneProps {
-  onUpload: (files: FileList | File[]) => void;
-  isUploading?: boolean;
-}
-
-export function UploadZone({ onUpload, isUploading = false }: UploadZoneProps) {
+export function UploadZone() {
+  const { uploadFiles, isUploading, uploadProgress } = useDocStore();
+  const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  const handleFiles = useCallback(
+    (files: FileList | File[]) => {
+      const fileArray = Array.from(files);
+      if (fileArray.length > 0) {
+        uploadFiles(fileArray);
+      }
+    },
+    [uploadFiles],
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      setIsDragging(false);
+      setIsDragOver(false);
       if (e.dataTransfer.files.length > 0) {
-        onUpload(e.dataTransfer.files);
+        handleFiles(e.dataTransfer.files);
       }
     },
-    [onUpload],
+    [handleFiles],
   );
 
-  const handleClick = useCallback(() => {
-    inputRef.current?.click();
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
   }, []);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        onUpload(e.target.files);
-      }
-      // Reset so the same file can be selected again
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
       e.target.value = '';
-    },
-    [onUpload],
-  );
+    }
+  };
 
   return (
-    <div className="p-3 border-t border-gray-200 dark:border-hearth-700">
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={handleFileChange}
-        accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.wav,.mp3,.ogg"
-      />
+    <div className="px-4 py-3">
       <div
+        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+          isDragOver
+            ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/20'
+            : 'border-gray-300 dark:border-hearth-600 hover:border-gray-400 dark:hover:border-hearth-500'
+        } ${isUploading ? 'pointer-events-none opacity-60' : ''}`}
+        onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
         onClick={handleClick}
-        className={`
-          border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors
-          ${
-            isDragging
-              ? 'border-hearth-400 bg-hearth-50 dark:bg-hearth-800'
-              : 'border-gray-300 dark:border-hearth-600 hover:border-hearth-400 dark:hover:border-hearth-500'
-          }
-          ${isUploading ? 'pointer-events-none opacity-60' : ''}
-        `}
       >
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.mp3,.wav,.m4a,.ogg,.txt,.md"
+          className="hidden"
+          onChange={handleInputChange}
+        />
         {isUploading ? (
           <div className="space-y-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Uploading...</p>
-            <ProgressBar value={50} className="max-w-xs mx-auto" />
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Uploading...{' '}
+              {uploadProgress
+                ? `${Math.round((uploadProgress.loaded / uploadProgress.total) * 100)}%`
+                : ''}
+            </div>
+            {uploadProgress && (
+              <div className="w-full bg-gray-200 dark:bg-hearth-700 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(uploadProgress.loaded / uploadProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
-          </p>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-medium text-blue-500 dark:text-blue-400">
+              Click to upload
+            </span>{' '}
+            or drag and drop
+            <br />
+            PDF, images, audio, text
+          </div>
         )}
       </div>
     </div>

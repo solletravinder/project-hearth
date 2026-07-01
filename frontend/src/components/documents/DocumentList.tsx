@@ -1,8 +1,9 @@
-import { useDocuments } from '@/hooks/useDocuments';
+import { useEffect } from 'react';
+import { useDocStore } from '@/store/docStore';
 import { DocumentItem } from './DocumentItem';
 import { UploadZone } from './UploadZone';
-import { EmptyState } from '@/components/common/EmptyState';
 import { Spinner } from '@/components/common/Spinner';
+import { EmptyState } from '@/components/common/EmptyState';
 import type { Document } from '@/types';
 
 interface DocumentListProps {
@@ -10,49 +11,70 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ onSelect }: DocumentListProps) {
-  const { documents, isLoading, error, deleteDocument, uploadFiles, isUploading } = useDocuments();
+  const { documents, isLoading, error, fetchDocuments, deleteDocument } = useDocStore();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner />
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
-  if (error) {
-    return (
-      <div className="px-4 py-6">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-400">
-          {error}
-        </div>
-      </div>
-    );
-  }
+  const handleSelect = (doc: Document) => {
+    onSelect(doc);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteDocument(id);
+  };
 
   return (
     <div className="flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-hearth-700">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
+          Documents
+        </h2>
+      </div>
+
+      <UploadZone />
+
       <div className="flex-1 overflow-y-auto">
-        {documents.length === 0 ? (
+        {error && (
+          <div className="px-4 py-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 mx-3 mt-2 rounded">
+            {error}
+            <button
+              onClick={() => fetchDocuments()}
+              className="ml-2 underline hover:no-underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {isLoading && documents.length === 0 && (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="md" />
+          </div>
+        )}
+
+        {!isLoading && !error && documents.length === 0 && (
           <EmptyState
+            icon={<span className="text-3xl">{'\u{1F4C1}'}</span>}
             title="No documents yet"
-            description="Upload PDFs, images, or text files to get started."
+            description="Upload a PDF, image, audio file, or text document to get started."
           />
-        ) : (
-          documents.map((doc) => (
-            <DocumentItem
-              key={doc.id}
-              document={doc}
-              onSelect={onSelect}
-              onDelete={deleteDocument}
-            />
-          ))
+        )}
+
+        {documents.length > 0 && (
+          <div className="py-1">
+            {documents.map((doc) => (
+              <DocumentItem
+                key={doc.id}
+                document={doc}
+                onSelect={handleSelect}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
         )}
       </div>
-      <UploadZone
-        onUpload={uploadFiles}
-        isUploading={isUploading}
-      />
     </div>
   );
 }

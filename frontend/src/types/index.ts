@@ -1,6 +1,11 @@
 /* ── Document Types ──────────────────────────────────────────── */
 
 export type DocType = 'pdf' | 'image' | 'audio' | 'note' | 'text';
+
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+}
 export type DocStatus = 'pending' | 'processing' | 'ready' | 'error';
 
 export interface Document {

@@ -1,5 +1,6 @@
 import type { Document, DocType } from '@/types';
 import { formatFileSize, formatDate } from '@/utils/format';
+import { ProcessingIndicator, type ProcessingStep } from './ProcessingIndicator';
 
 interface DocumentItemProps {
   document: Document;
@@ -24,6 +25,35 @@ const statusColors: Record<string, string> = {
 
 export function DocumentItem({ document, onSelect, onDelete }: DocumentItemProps) {
   const doc = document;
+  const isProcessing = doc.status === 'pending' || doc.status === 'processing';
+
+  const processingSteps: ProcessingStep[] = (() => {
+    if (doc.status === 'pending') {
+      return [
+        { label: 'Classify', status: 'pending' as const },
+        { label: 'Extract', status: 'pending' as const },
+        { label: 'Chunk', status: 'pending' as const },
+        { label: 'Embed', status: 'pending' as const },
+        { label: 'Store', status: 'pending' as const },
+      ];
+    }
+    if (doc.status === 'error') {
+      return [
+        { label: 'Classify', status: 'error' as const },
+        { label: 'Extract', status: 'error' as const },
+        { label: 'Chunk', status: 'error' as const },
+        { label: 'Embed', status: 'error' as const },
+        { label: 'Store', status: 'error' as const },
+      ];
+    }
+    return [
+      { label: 'Classify', status: 'done' as const },
+      { label: 'Extract', status: doc.status === 'processing' ? ('active' as const) : ('done' as const) },
+      { label: 'Chunk', status: doc.status === 'ready' ? ('done' as const) : ('pending' as const) },
+      { label: 'Embed', status: doc.status === 'ready' ? ('done' as const) : ('pending' as const) },
+      { label: 'Store', status: doc.status === 'ready' ? ('done' as const) : ('pending' as const) },
+    ];
+  })();
 
   return (
     <div
@@ -45,10 +75,17 @@ export function DocumentItem({ document, onSelect, onDelete }: DocumentItemProps
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {formatDate(doc.created_at)}
           </span>
-          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${statusColors[doc.status] || statusColors.pending}`}>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${statusColors[doc.status] || statusColors.pending}`}
+          >
             {doc.status}
           </span>
         </div>
+        {isProcessing && (
+          <div className="mt-1">
+            <ProcessingIndicator steps={processingSteps} />
+          </div>
+        )}
       </div>
       <button
         onClick={(e) => {
@@ -60,7 +97,12 @@ export function DocumentItem({ document, onSelect, onDelete }: DocumentItemProps
         aria-label="Delete document"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
         </svg>
       </button>
     </div>
