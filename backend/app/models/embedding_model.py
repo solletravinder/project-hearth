@@ -2,9 +2,20 @@
 
 import logging
 import random
-
-import numpy as np
 from typing import Optional
+
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    np = None  # type: ignore [assignment]
+
+try:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+    HAS_SENTENCE_TRANSFORMERS = True
+except ImportError:
+    HAS_SENTENCE_TRANSFORMERS = False
 
 from app.models.manager import model_manager
 
@@ -21,12 +32,12 @@ class EmbeddingService:
 
     async def load(self):
         """Load the embedding model (gte-small via sentence-transformers)."""
+        if not HAS_SENTENCE_TRANSFORMERS:
+            logger.warning("sentence-transformers not installed; using mock embeddings")
+            return
         try:
-            from sentence_transformers import SentenceTransformer  # type: ignore
             self._model = SentenceTransformer("gte-small", trust_remote_code=True)
             logger.info("Embedding model loaded successfully")
-        except ImportError:
-            logger.warning("sentence-transformers not installed; using mock embeddings")
         except Exception as e:
             logger.warning(f"Failed to load embedding model: {e}; using mock embeddings")
 
@@ -34,7 +45,7 @@ class EmbeddingService:
         """Embed a list of texts into 384-dim vectors."""
         if self._model is None:
             await self.load()
-        if self._model is not None:
+        if self._model is not None and HAS_NUMPY:
             try:
                 embeddings = self._model.encode(texts, normalize_embeddings=True)
                 return embeddings.tolist() if isinstance(embeddings, np.ndarray) else embeddings

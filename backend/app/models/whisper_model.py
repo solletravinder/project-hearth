@@ -4,6 +4,12 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+try:
+    from faster_whisper import WhisperModel  # type: ignore
+    HAS_WHISPER = True
+except ImportError:
+    HAS_WHISPER = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -14,12 +20,12 @@ class WhisperService:
         self._model = None
 
     async def load(self):
+        if not HAS_WHISPER:
+            logger.warning("faster-whisper not installed; using mock transcription")
+            return
         try:
-            from faster_whisper import WhisperModel  # type: ignore
             self._model = WhisperModel("base", device="cpu", compute_type="int8")
             logger.info("Whisper model loaded successfully")
-        except ImportError:
-            logger.warning("faster-whisper not installed; using mock transcription")
         except Exception as e:
             logger.warning(f"Failed to load Whisper model: {e}; using mock transcription")
 

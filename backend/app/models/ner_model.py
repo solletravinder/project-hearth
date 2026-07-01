@@ -4,6 +4,12 @@ import logging
 import re
 from typing import Optional
 
+try:
+    import spacy  # type: ignore
+    HAS_SPACY = True
+except ImportError:
+    HAS_SPACY = False
+
 logger = logging.getLogger(__name__)
 
 PII_PATTERNS = [
@@ -20,12 +26,12 @@ class NERService:
         self._nlp = None
 
     async def load(self):
+        if not HAS_SPACY:
+            logger.warning("spaCy not installed; using regex-only PII detection")
+            return
         try:
-            import spacy  # type: ignore
             self._nlp = spacy.load("en_core_web_sm")
             logger.info("spaCy NER model loaded successfully")
-        except ImportError:
-            logger.warning("spaCy not installed; using regex-only PII detection")
         except Exception as e:
             logger.warning(f"Failed to load spaCy model: {e}; using regex-only detection")
 

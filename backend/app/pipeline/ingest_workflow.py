@@ -1,11 +1,23 @@
 """LangGraph ingestion state machine."""
 
 import logging
+import struct
 from typing import TypedDict, Literal, Optional, Any
 
+import aiofiles
 from langgraph.graph import StateGraph, END
 
+from app.core.chunking import chunk_by_characters
+from app.models.embedding_model import embedding_service
+from app.models.trocr_model import trocr_service
+from app.models.whisper_model import whisper_service
 from app.storage.repository import create_chunk, rebuild_fts, update_document_status
+
+try:
+    import fitz  # type: ignore
+    HAS_FITZ = True
+except ImportError:
+    HAS_FITZ = False
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +44,6 @@ async def extract_text(state: IngestionState) -> dict:
     doc_type = state["doc_type"]
     file_path = state["file_path"]
     raw_text = ""
-    import aiofiles
 
     try:
         if doc_type == "text" or doc_type == "note":
@@ -40,23 +51,20 @@ async def extract_text(state: IngestionState) -> dict:
                 raw_text = await f.read()
 
         elif doc_type == "pdf":
-            # Try PyMuPDF, fall back to mock
-            try:
-                import fitz  # type: ignore
-                doc = fitz.open(file_path)
-                raw_text = "\n".join(page.get_text() for page in doc)
-                doc.close()
-            except ImportError:
+            if HAS_FITZ:
+                try:
+                    doc = fitz.open(file_path)
+                    raw_text = "\n".join(page.get_text() for page in doc)
+                    doc.close()
+                except Exception:
+                    raw_text = f"[Mock PDF extraction of {state['document_title']}]"
+            else:
                 raw_text = f"[Mock PDF extraction of {state['document_title']}]"
 
         elif doc_type == "image":
-            from app.models.trocr_model import trocr_service
-
             raw_text = await trocr_service.ocr(file_path)
 
         elif doc_type == "audio":
-            from app.models.whisper_model import whisper_service
-
             raw_text = await whisper_service.transcribe(file_path)
 
         if not raw_text:
@@ -70,8 +78,6 @@ async def extract_text(state: IngestionState) -> dict:
 
 def chunk_text(state: IngestionState) -> dict:
     """Split extracted text into chunks."""
-    from app.core.chunking import chunk_by_characters
-
     raw_text = state.get("raw_text", "")
     if not raw_text:
         return {"chunks": [], "status": "error", "error": "No text to chunk"}
@@ -93,8 +99,6 @@ def chunk_text(state: IngestionState) -> dict:
 
 async def embed_chunks(state: IngestionState) -> dict:
     """Embed each chunk using the embedding service."""
-    from app.models.embedding_model import embedding_service
-
     chunks = state.get("chunks", [])
     if not chunks:
         return {"chunks": []}
@@ -116,8 +120,6 @@ async def store_chunks(state: IngestionState) -> dict:
     for chunk in chunks:
         emb_bytes = None
         if chunk.get("embedding"):
-            import struct
-
             emb_bytes = struct.pack(f"{len(chunk['embedding'])}f", *chunk["embedding"])
         await create_chunk(
             document_id=doc_id,
