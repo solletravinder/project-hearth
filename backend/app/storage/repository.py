@@ -34,8 +34,9 @@ async def create_document(
     mime_type: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
     word_count: int = 0,
+    doc_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    doc_id = _new_id()
+    doc_id = doc_id or _new_id()
     now = _now()
     conn = await get_db()
     try:
@@ -172,6 +173,21 @@ async def create_chunk(
         cursor = await conn.execute("SELECT * FROM chunks WHERE id = ?", (chunk_id,))
         row = await cursor.fetchone()
         return _row_to_dict(row)
+    finally:
+        await conn.close()
+
+
+async def rebuild_fts() -> bool:
+    """Rebuild the FTS5 index from the chunks table.
+    Only works with external content FTS5 tables.
+    """
+    conn = await get_db()
+    try:
+        await conn.execute("INSERT INTO chunks_fts(chunks_fts) VALUES('rebuild')")
+        await conn.commit()
+        return True
+    except Exception:
+        return False
     finally:
         await conn.close()
 

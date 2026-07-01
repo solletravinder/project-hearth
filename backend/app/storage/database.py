@@ -28,7 +28,7 @@ async def init_db() -> None:
                 title TEXT NOT NULL,
                 doc_type TEXT NOT NULL CHECK(doc_type IN ('pdf','epub','markdown','audio','text','html','image','other')),
                 folder TEXT DEFAULT 'default',
-                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','indexed','failed')),
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','ready','error','indexed','failed')),
                 file_path TEXT,
                 file_size INTEGER DEFAULT 0,
                 mime_type TEXT,

@@ -66,8 +66,8 @@ def test_model_status():
         resp = client.get("/api/models/status")
         assert resp.status_code == 200
         data = resp.json()
-        assert "loaded_models" in data
-        assert "count" in data
+        assert "models" in data
+        assert "loaded_count" in data
 
 
 def test_document_upload():
