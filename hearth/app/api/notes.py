@@ -28,7 +28,9 @@ async def list_notes_endpoint(
 ) -> NoteListResponse:
     offset = (page - 1) * per_page
     notes = await list_notes(folder=folder, pinned=pinned, limit=per_page, offset=offset)
-    return NoteListResponse(items=notes, page=page, per_page=per_page)
+    return NoteListResponse(
+        items=[NoteResponse(**n) for n in notes], page=page, per_page=per_page
+    )
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=NoteResponse)
@@ -66,7 +68,7 @@ async def update_note_endpoint(note_id: str, body: UpdateNoteRequest) -> NoteRes
         tags=body.tags,
         pinned=body.pinned,
     )
-    return NoteResponse(**updated)
+    return NoteResponse(**(updated or {}))
 
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)

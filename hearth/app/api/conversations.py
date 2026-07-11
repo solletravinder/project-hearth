@@ -7,6 +7,7 @@ from app.api.schemas import (
     ConversationResponse,
     CreateConversationResponse,
     MessageListResponse,
+    MessageResponse,
 )
 from app.storage.repos.conversations import (
     create_conversation,
@@ -23,7 +24,9 @@ router = APIRouter(prefix="/api/conversations")
 async def list_convs(page: int = 1, per_page: int = 50) -> ConversationListResponse:
     offset = (page - 1) * per_page
     convs = await list_conversations(limit=per_page, offset=offset)
-    return ConversationListResponse(items=convs, page=page, per_page=per_page)
+    return ConversationListResponse(
+        items=[ConversationResponse(**c) for c in convs], page=page, per_page=per_page
+    )
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=CreateConversationResponse)
@@ -45,11 +48,15 @@ async def delete_conv(conv_id: str):
 
 
 @router.get("/{conv_id}/messages", response_model=MessageListResponse)
-async def get_conv_messages(conv_id: str, page: int = 1, per_page: int = 100) -> MessageListResponse:
+async def get_conv_messages(
+    conv_id: str, page: int = 1, per_page: int = 100
+) -> MessageListResponse:
     conv = await get_conversation(conv_id)
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     offset = (page - 1) * per_page
     messages = await get_messages(conversation_id=conv_id, limit=per_page, offset=offset)
-    return MessageListResponse(items=messages, page=page, per_page=per_page)
+    return MessageListResponse(
+        items=[MessageResponse(**m) for m in messages], page=page, per_page=per_page
+    )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.storage.repos.chunks import create_chunk, rebuild_fts
 from app.storage.repos.documents import (
     create_document,
     delete_document,
@@ -7,7 +8,6 @@ from app.storage.repos.documents import (
     list_documents,
     update_document_status,
 )
-from app.storage.repos.chunks import create_chunk, rebuild_fts
 
 
 class DocumentService:
@@ -20,7 +20,9 @@ class DocumentService:
     async def list_documents(self, **filters) -> list[dict]:
         return await list_documents(**filters)
 
-    async def update_status(self, doc_id: str, status: str, metadata: dict | None = None) -> dict | None:
+    async def update_status(
+        self, doc_id: str, status: str, metadata: dict | None = None
+    ) -> dict | None:
         return await update_document_status(doc_id, status, metadata)
 
     async def delete_document(self, doc_id: str) -> bool:

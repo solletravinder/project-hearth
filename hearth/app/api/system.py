@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.schemas import HealthResponse
 from app import __version__
+from app.api.schemas import HealthResponse
 from app.models.manager import model_manager
 from app.storage.database import check_db_health
 

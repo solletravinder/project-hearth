@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Query
 
-from app.api.schemas import SearchResponse
+from app.api.schemas import SearchResponse, SearchResult
 from app.storage.database import get_db
 
 router = APIRouter(prefix="/api/search")
@@ -11,8 +11,8 @@ router = APIRouter(prefix="/api/search")
 @router.get("/", response_model=SearchResponse)
 async def search(
     q: str = Query(..., min_length=1),
-    doc_type: str | None = None,
-    folder: str | None = None,
+    _doc_type: str | None = None,
+    _folder: str | None = None,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=10, ge=1, le=100),
 ) -> SearchResponse:

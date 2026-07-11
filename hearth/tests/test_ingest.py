@@ -1,5 +1,7 @@
 """Tests for ingestion pipeline with mock data."""
 
+import contextlib
+
 import pytest
 
 from app.config import settings
@@ -12,10 +14,8 @@ async def fresh_db():
     """Ensure a fresh database for each test."""
     db_path = settings.resolved_db_path
     if db_path.exists():
-        try:
+        with contextlib.suppress(PermissionError):
             db_path.unlink()
-        except PermissionError:
-            pass  # Windows file lock — will be overwritten
     await init_db()
     yield
 

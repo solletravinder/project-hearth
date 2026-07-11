@@ -87,7 +87,19 @@ async def chat(body: ChatRequest) -> ChatResponse:
     return ChatResponse(
         conversation_id=conv_id,
         message=MessageResponse(**msg),
-        messages=[MessageResponse(**m) for m in messages],
+        messages=[
+            MessageResponse(
+                id=m["id"],
+                conversation_id=m["conversation_id"],
+                role=m["role"],
+                content=m["content"],
+                context_docs=None,
+                tokens_in=int(m.get("tokens_in", 0)),
+                tokens_out=int(m.get("tokens_out", 0)),
+                created_at=m["created_at"],
+            )
+            for m in messages
+        ],
         pii_redacted=pii_redacted,
     )
 

@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+
 from app.api.schemas import (
     BatchDeleteRequest,
     BatchDeleteResponse,
     DocumentListResponse,
     DocumentResponse,
 )
-
 from app.storage.file_store import save_file
 from app.storage.repos.documents import (
     create_document,
@@ -52,7 +50,10 @@ def _infer_type(filename: str) -> str:
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload_document(file: UploadFile = File(...), folder: str = "default") -> DocumentResponse:  # noqa: B008
+async def upload_document(
+    file: UploadFile = File(...),  # noqa: B008
+    folder: str = "default",
+) -> DocumentResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
@@ -100,7 +101,9 @@ async def list_docs(
         limit=per_page,
         offset=offset,
     )
-    return DocumentListResponse(items=docs, page=page, per_page=per_page)
+    return DocumentListResponse(
+        items=[DocumentResponse(**d) for d in docs], page=page, per_page=per_page
+    )
 
 
 @router.get("/{doc_id}", response_model=DocumentResponse)
@@ -135,4 +138,4 @@ async def reindex_document(doc_id: str) -> DocumentResponse:
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     updated = await update_document_status(doc_id, "pending")
-    return DocumentResponse(**updated)
+    return DocumentResponse(**(updated or {}))

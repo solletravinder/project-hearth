@@ -22,10 +22,16 @@ class ConversationService:
     async def delete_conversation(self, conv_id: str) -> bool:
         return await delete_conversation(conv_id)
 
-    async def create_message(self, conversation_id: str, role: str, content: str, **kwargs) -> dict:
-        return await create_message(conversation_id=conversation_id, role=role, content=content, **kwargs)
+    async def create_message(
+        self, conversation_id: str, role: str, content: str, **kwargs
+    ) -> dict:
+        return await create_message(
+            conversation_id=conversation_id, role=role, content=content, **kwargs
+        )
 
-    async def get_messages(self, conversation_id: str, limit: int = 100, offset: int = 0) -> list[dict]:
+    async def get_messages(
+        self, conversation_id: str, limit: int = 100, offset: int = 0
+    ) -> list[dict]:
         return await get_messages(conversation_id=conversation_id, limit=limit, offset=offset)
 
 

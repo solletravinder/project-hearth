@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import json
-import struct
 from typing import Any
 
 from app.storage.database import get_db
 from app.storage.repos._shared import _new_id, _row_to_dict
-from app.config import settings
 
 
 async def create_chunk(

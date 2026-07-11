@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/models")
 
 @router.get("/status", response_model=HealthResponse)
 async def model_status() -> HealthResponse:
-    provider_status = await provider_registry.get_status()
+    await provider_registry.get_status()
     return HealthResponse(
         version="0.1.0",
         status="ok",

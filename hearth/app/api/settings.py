@@ -30,7 +30,10 @@ async def update_settings_endpoint(body: dict[str, Any]) -> SettingsResponse:
 
 
 # Settings that should be numbers or booleans rather than raw strings
-_NUMERIC_KEYS = {"max_tokens", "temperature", "top_k", "top_p", "chunk_size", "chunk_overlap", "search_result_count"}
+_NUMERIC_KEYS = {
+    "max_tokens", "temperature", "top_k", "top_p",
+    "chunk_size", "chunk_overlap", "search_result_count",
+}
 _BOOL_KEYS = {"pii_filter_enabled"}
 
 

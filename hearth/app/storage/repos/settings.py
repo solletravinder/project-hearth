@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.storage.database import get_db
-from app.storage.repos._shared import _now, _row_to_dict
+from app.storage.repos._shared import _now
 
 
 async def get_settings() -> dict[str, str]:
