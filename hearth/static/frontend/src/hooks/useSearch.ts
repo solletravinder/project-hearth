@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { search as searchApi } from '@/api/client';
 
 interface SearchResult {
@@ -14,7 +14,6 @@ export function useSearch() {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => {
@@ -23,13 +22,14 @@ export function useSearch() {
     setResults([]);
   }, []);
 
-  const searchQuery = useCallback(async (q: string) => {
+  const search = useCallback(async (q: string) => {
     if (!q.trim()) {
       setResults([]);
       setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     try {
       const res = await searchApi.query({ q, per_page: 10 });
       setResults(
@@ -46,24 +46,6 @@ export function useSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const search = useCallback((q: string) => {
-    setQuery(q);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!q.trim()) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    debounceRef.current = setTimeout(() => searchQuery(q), 300);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
   }, []);
 
   return { results, query, isOpen, isLoading, open, close, search };
