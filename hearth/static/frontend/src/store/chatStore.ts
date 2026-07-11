@@ -7,6 +7,7 @@ interface ChatState {
   activeConversationId: string | null;
   messages: Message[];
   isStreaming: boolean;
+  isLoading: boolean;
   streamBuffer: string;
   statusMessage: string | null;
   error: string | null;
@@ -27,6 +28,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   activeConversationId: null,
   messages: [],
   isStreaming: false,
+  isLoading: false,
   streamBuffer: '',
   statusMessage: null,
   error: null,
