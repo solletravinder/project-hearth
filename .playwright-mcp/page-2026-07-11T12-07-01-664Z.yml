@@ -1,0 +1,38 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - img "Hearth" [ref=f1e6]: 🔥
+      - generic [ref=f1e7]: Hearth
+    - generic [ref=f1e8]:
+      - button "Search" [ref=f1e9] [cursor=pointer]
+      - button "Toggle PII filter" [ref=f1e12] [cursor=pointer]
+      - button "Settings" [ref=f1e15] [cursor=pointer]
+  - generic [ref=f1e19]:
+    - complementary [ref=f1e20]:
+      - generic [ref=f1e21] [cursor=pointer]:
+        - generic [ref=f1e22]: Documents
+        - paragraph [ref=f1e27]: No documents yet
+      - generic [ref=f1e28] [cursor=pointer]:
+        - generic [ref=f1e29]: Notes
+        - paragraph [ref=f1e34]: No notes yet
+      - generic [ref=f1e35] [cursor=pointer]:
+        - generic [ref=f1e36]: Chats
+        - paragraph [ref=f1e41]: No conversations yet
+    - main [ref=f1e42]:
+      - generic [ref=f1e43]:
+        - generic [ref=f1e44]:
+          - generic [ref=f1e64]:
+            - paragraph [ref=f1e65]: What is Hearth?
+            - generic [ref=f1e66]: Just now
+          - generic [ref=f1e68]:
+            - paragraph [ref=f1e69]: "[Ollama unavailable: All connection attempts failed]"
+            - generic [ref=f1e70]: 5h ago
+          - generic [ref=f1e71]: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+        - generic [ref=f1e49]:
+          - button "Attach" [ref=f1e50] [cursor=pointer]
+          - textbox "Ask anything... (Ctrl+Enter to send)" [active] [ref=f1e53]
+          - button "Voice" [ref=f1e54] [cursor=pointer]
+          - button "Send" [ref=f1e57] [cursor=pointer]
+  - contentinfo [ref=f1e60]:
+    - generic "No model loaded" [ref=f1e61]: "Model: No model loaded"
+    - generic [ref=f1e62]: PII OFF

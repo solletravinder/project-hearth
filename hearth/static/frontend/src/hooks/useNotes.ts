@@ -12,7 +12,7 @@ export function useNotes() {
     const fetchNotes = async () => {
       try {
         const response = await apiClient.notes.list();
-        setNotes(response.notes);
+        setNotes(response.items);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch notes');
       } finally {

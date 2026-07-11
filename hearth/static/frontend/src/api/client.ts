@@ -62,11 +62,11 @@ export const documents = {
     if (params?.page) qs.set('page', String(params.page));
     if (params?.per_page) qs.set('per_page', String(params.per_page));
     const query = qs.toString();
-    return request(query ? `/documents?${query}` : '/documents');
+    return request(query ? `/documents/?${query}` : '/documents/');
   },
 
   get(id: string): Promise<Document> {
-    return request(`/documents/${id}`);
+    return request(`/documents/${id}/`);
   },
 
   upload(file: File, folder?: string): Promise<Document> {
@@ -80,7 +80,7 @@ export const documents = {
   },
 
   delete(id: string): Promise<void> {
-    return request(`/documents/${id}`, { method: 'DELETE' });
+    return request(`/documents/${id}/`, { method: 'DELETE' });
   },
 
   batchDelete(ids: string[]): Promise<void> {
@@ -133,22 +133,22 @@ export const search = {
 
 export const conversations = {
   list(page = 1): Promise<{ conversations: Conversation[]; total: number }> {
-    return request(`/conversations?page=${page}`);
+    return request(`/conversations/?page=${page}`);
   },
 
   create(title?: string): Promise<Conversation> {
-    return request('/conversations', {
+    return request('/conversations/', {
       method: 'POST',
       body: JSON.stringify({ title }),
     });
   },
 
   delete(id: string): Promise<void> {
-    return request(`/conversations/${id}`, { method: 'DELETE' });
+    return request(`/conversations/${id}/`, { method: 'DELETE' });
   },
 
   messages(id: string, page = 1): Promise<{ messages: Message[]; total: number }> {
-    return request(`/conversations/${id}/messages?page=${page}`);
+    return request(`/conversations/${id}/messages/?page=${page}`);
   },
 };
 
@@ -156,7 +156,7 @@ export const conversations = {
 
 export const chat = {
   send(req: ChatRequest): Promise<ChatResponse> {
-    return request('/chat', {
+    return request('/chat/', {
       method: 'POST',
       body: JSON.stringify(req),
     });
@@ -172,35 +172,35 @@ interface ListNotesParams {
 }
 
 export const notes = {
-  list(params?: ListNotesParams): Promise<{ notes: Note[]; total: number }> {
+  list(params?: ListNotesParams): Promise<{ items: Note[]; total: number }> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.per_page) qs.set('per_page', String(params.per_page));
     if (params?.tag) qs.set('tag', params.tag);
     const query = qs.toString();
-    return request(query ? `/notes?${query}` : '/notes');
+    return request(query ? `/notes/?${query}` : '/notes/');
   },
 
   create(data: { title: string; content: string; tags?: string[] }): Promise<Note> {
-    return request('/notes', {
+    return request('/notes/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
   get(id: string): Promise<Note> {
-    return request(`/notes/${id}`);
+    return request(`/notes/${id}/`);
   },
 
   update(id: string, data: Partial<{ title: string; content: string; tags: string[] }>): Promise<Note> {
-    return request(`/notes/${id}`, {
+    return request(`/notes/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
   delete(id: string): Promise<void> {
-    return request(`/notes/${id}`, { method: 'DELETE' });
+    return request(`/notes/${id}/`, { method: 'DELETE' });
   },
 };
 
@@ -208,12 +208,12 @@ export const notes = {
 
 export const settings = {
   async get(): Promise<AppSettings> {
-    const res = await request<{ settings: AppSettings }>('/settings');
+    const res = await request<{ settings: AppSettings }>('/settings/');
     return res.settings;
   },
 
   async update(data: Partial<AppSettings>): Promise<AppSettings> {
-    const res = await request<{ settings: AppSettings }>('/settings', {
+    const res = await request<{ settings: AppSettings }>('/settings/', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -242,11 +242,11 @@ interface ModelStatusResponse {
 
 export const models = {
   status(): Promise<ModelStatusResponse> {
-    return request('/models/status');
+    return request('/models/status/');
   },
 
   profiles(): Promise<{ profiles: string[] }> {
-    return request('/models/profiles');
+    return request('/models/profiles/');
   },
 
   unload(name: string): Promise<void> {

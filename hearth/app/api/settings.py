@@ -19,7 +19,7 @@ async def get_settings_endpoint() -> SettingsResponse:
     return SettingsResponse(settings=typed)
 
 
-@router.put("", response_model=SettingsResponse)
+@router.put("/", response_model=SettingsResponse)
 async def update_settings_endpoint(body: dict[str, Any]) -> SettingsResponse:
     updated: dict[str, Any] = {}
     for key, value in body.items():
@@ -47,5 +47,4 @@ def _coerce_value(key: str, value: str) -> str | int | float | bool:
             return int(value)
         except (ValueError, TypeError):
             return value
-    return value
     return value

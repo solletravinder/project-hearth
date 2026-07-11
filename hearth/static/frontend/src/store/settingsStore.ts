@@ -36,15 +36,16 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
   fetchModelStatus: async () => {
     try {
       const res = await modelsApi.status();
-      const list: ModelStatus[] = Object.entries(res.models.models).map(
-        ([name, info]) => ({
-          name,
-          loaded: info.status === 'ready',
-          model_type: 'chat' as const,
-          size: '',
-          modified_at: info.loaded_at ?? '',
-        }),
-      );
+      const modelEntries = (res as { models?: { models?: Record<string, { status: string }> } }).models?.models;
+      const list: ModelStatus[] = modelEntries
+        ? Object.entries(modelEntries).map(([name, info]) => ({
+            name,
+            loaded: info.status === 'ready',
+            model_type: 'chat' as const,
+            size: '',
+            modified_at: (info as { loaded_at?: string | null }).loaded_at ?? '',
+          }))
+        : [];
       set({ modelStatus: list });
     } catch {
       set({ error: 'Failed to load model status' });

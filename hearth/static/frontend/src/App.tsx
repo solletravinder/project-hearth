@@ -38,7 +38,7 @@ export default function App() {
         <Routes>
           <Route path="/documents" element={<DocumentsView />} />
           <Route path="/notes" element={<NotesView />} />
-          <Route path="/" element={<ChatView />} />
+          <Route path="/chat" element={<ChatView />} />
         </Routes>
       </AppLayout>
       <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
