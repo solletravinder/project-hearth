@@ -86,17 +86,22 @@ First run walks you through a system check and model download (~2-5 minutes depe
 
 ```bash
 # Backend
-cd backend
+cd hearth
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8765
 
-# Frontend (separate terminal)
-cd frontend
+# Frontend (separate terminal, for dev)
+cd hearth/static/frontend
 npm install
 npm run dev
 # Open http://localhost:5173
+
+# Or use the startup script (builds React + starts server):
+cd hearth
+./scripts/start.sh        # Linux/macOS
+.\scripts\start.ps1        # Windows
 ```
 
 ## Features
@@ -149,38 +154,36 @@ npm run dev
 
 ```
 hearth/
-├── backend/          # Python FastAPI server
-│   ├── app/
-│   │   ├── api/      # REST endpoints
-│   │   ├── models/   # ML model wrappers
-│   │   ├── pipeline/ # LangGraph workflows
-│   │   ├── storage/  # Database + file store
-│   │   └── core/     # Utilities (chunking, PII)
-│   └── tests/
-├── frontend/         # React + Vite SPA
-│   └── src/
-│       ├── components/  # React components (by domain)
-│       ├── hooks/       # Custom hooks
-│       ├── store/       # Zustand stores
-│       └── api/         # API client
-├── eval/             # CI eval harness + test corpus
-├── scripts/          # Utility scripts
-└── docker-compose.yml
+├── app/                    # Python FastAPI server
+│   ├── api/                # REST endpoints
+│   ├── models/             # ML model wrappers
+│   ├── pipeline/           # LangGraph workflows
+│   ├── storage/            # Database + file store
+│   ├── providers/          # Pluggable model providers
+│   └── core/               # Utilities (chunking, PII)
+├── static/
+│   └── frontend/           # React + Vite SPA
+│       ├── src/            # React source
+│       ├── dist/           # Build output (served by FastAPI)
+│       └── ...
+├── scripts/                # Dev & startup scripts
+├── tests/                  # Backend tests
+└── pyproject.toml
 ```
 
 ### Running Tests
 
 ```bash
 # Backend tests
-cd backend
+cd hearth
 pytest tests/ -v --cov=app
 
 # CI eval harness
 cd eval
-python run_eval.py --corpus test_corpus/ --backend-python ../backend
+python run_eval.py --corpus test_corpus/ --backend-python ../hearth
 
 # Frontend checks
-cd frontend
+cd hearth/static/frontend
 npm run lint
 npm run typecheck
 ```

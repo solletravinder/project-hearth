@@ -4,15 +4,18 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 
 # Models
-backend/models/*.gguf
-backend/models/*.onnx
-backend/models/*.bin
+hearth/models/*.gguf
+hearth/models/*.onnx
+hearth/models/*.bin
 
 # Data
-backend/data/*
-!backend/data/.gitkeep
+hearth/data/*
+!hearth/data/.gitkeep
 
 # Node
 node_modules/
@@ -29,8 +32,9 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Docker
+# Env / secrets
 .env
+hearth/.env
 
 # Logs
 *.log
