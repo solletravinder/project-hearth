@@ -109,8 +109,18 @@ interface SearchParams {
   per_page?: number;
 }
 
+interface SearchResultItem {
+  chunk_id: string;
+  document_id: string;
+  content: string;
+  doc_title: string;
+  doc_type: string;
+  token_count: number;
+  score: number;
+}
+
 interface SearchResponse {
-  items: Document[];
+  results: SearchResultItem[];
   total: number;
   page: number;
   per_page: number;

@@ -9,7 +9,7 @@ interface SearchDialogProps {
 
 export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { results, query, search, close } = useSearch();
+  const { results, query, search, close, isLoading } = useSearch();
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +64,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
         {/* Results */}
         <div className="max-h-64 overflow-y-auto p-2">
-          <SearchResults query={query} results={results} />
+          <SearchResults query={query} results={results} isLoading={isLoading} />
         </div>
       </div>
     </div>
