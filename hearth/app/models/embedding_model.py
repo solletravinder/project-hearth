@@ -8,7 +8,7 @@ try:
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
-    np = None
+    np = None  # type: ignore[assignment]
 
 try:
     from sentence_transformers import SentenceTransformer

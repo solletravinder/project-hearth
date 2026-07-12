@@ -253,6 +253,11 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         generation_ms=generation_ms,
     )
 
+    context_docs_raw = msg.get("context_docs")
+    context_docs: list[str] | None = (
+        json.loads(context_docs_raw) if isinstance(context_docs_raw, str) else context_docs_raw
+    )
+
     # 7. Complete SSE stream
     done_payload = {
         "citations": citations,
@@ -264,9 +269,9 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
             conversation_id=msg["conversation_id"],
             role=msg["role"],
             content=msg["content"],
-            context_docs=msg.get("context_docs"),
-            tokens_in=msg.get("tokens_in", 0),
-            tokens_out=msg.get("tokens_out", 0),
+            context_docs=context_docs,
+            tokens_in=int(msg.get("tokens_in", 0)),
+            tokens_out=int(msg.get("tokens_out", 0)),
             created_at=msg["created_at"]
         ).model_dump()
     }
