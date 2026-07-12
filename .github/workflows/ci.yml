@@ -91,4 +91,4 @@ jobs:
 
       - name: Run evaluation
         working-directory: eval
-        run: python run_eval.py
+        run: python run_eval.py --upload
