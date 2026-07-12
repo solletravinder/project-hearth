@@ -881,7 +881,7 @@ Coverage Details:
 - Annual Deductible: $1,000
 - Effective Date: January 1, 2025
 
-For claims or questions, contact our也不要help line at 1-800-555-0123.
+For claims or questions, contact our help line at 1-800-555-0123.
 
 Sincerely,
 Insurance Corp
