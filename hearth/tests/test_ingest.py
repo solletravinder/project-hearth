@@ -1,6 +1,7 @@
 """Tests for ingestion pipeline with mock data."""
 
 import contextlib
+import uuid
 
 import pytest
 
@@ -20,8 +21,14 @@ async def fresh_db():
     yield
 
 
+@pytest.fixture
+def unique_doc_id():
+    """Generate a unique document ID for each test."""
+    return f"test-doc-{uuid.uuid4().hex[:8]}"
+
+
 @pytest.mark.asyncio
-async def test_ingest_text(tmp_path):
+async def test_ingest_text(tmp_path, unique_doc_id):
     """Test full ingestion of a text file."""
     file_path = tmp_path / "test.txt"
     file_path.write_text("This is a test document. " * 200)
@@ -31,22 +38,22 @@ async def test_ingest_text(tmp_path):
         title="test.txt",
         doc_type="text",
         file_path=str(file_path),
-        doc_id="test-doc-1",
+        doc_id=unique_doc_id,
     )
     assert doc is not None
-    assert doc["id"] == "test-doc-1"
+    assert doc["id"] == unique_doc_id
 
     from app.pipeline.orchestrator import run_ingestion
 
     result = await run_ingestion(
-        document_id="test-doc-1",
+        document_id=unique_doc_id,
         file_path=str(file_path),
         doc_type="text",
         title="test.txt",
     )
     assert result["status"] in ("done", "error"), f"Pipeline failed: {result.get('error')}"
     if result["status"] == "done":
-        updated = await get_document("test-doc-1")
+        updated = await get_document(unique_doc_id)
         assert updated is not None
         assert updated["status"] == "ready"
 
@@ -56,7 +63,7 @@ async def test_ingest_text(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ingest_audio_mock(tmp_path):
+async def test_ingest_audio_mock(tmp_path, unique_doc_id):
     """Test audio ingestion uses mock transcription."""
     file_path = tmp_path / "test.wav"
     file_path.write_bytes(b"mock audio data")
@@ -65,14 +72,14 @@ async def test_ingest_audio_mock(tmp_path):
         title="test.wav",
         doc_type="audio",
         file_path=str(file_path),
-        doc_id="test-doc-2",
+        doc_id=unique_doc_id,
     )
     assert doc is not None
 
     from app.pipeline.orchestrator import run_ingestion
 
     result = await run_ingestion(
-        document_id="test-doc-2",
+        document_id=unique_doc_id,
         file_path=str(file_path),
         doc_type="audio",
         title="test.wav",
@@ -81,7 +88,7 @@ async def test_ingest_audio_mock(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ingest_empty_text(tmp_path):
+async def test_ingest_empty_text(tmp_path, unique_doc_id):
     """Test ingestion of an empty text file."""
     file_path = tmp_path / "empty.txt"
     file_path.write_text("")
@@ -90,14 +97,14 @@ async def test_ingest_empty_text(tmp_path):
         title="empty.txt",
         doc_type="text",
         file_path=str(file_path),
-        doc_id="test-doc-3",
+        doc_id=unique_doc_id,
     )
     assert doc is not None
 
     from app.pipeline.orchestrator import run_ingestion
 
     result = await run_ingestion(
-        document_id="test-doc-3",
+        document_id=unique_doc_id,
         file_path=str(file_path),
         doc_type="text",
         title="empty.txt",
