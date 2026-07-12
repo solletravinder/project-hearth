@@ -128,9 +128,9 @@ npm run dev
 - **Command palette** — `Ctrl+K` for everything
 - **Dark mode** — Respects system preference
 - **Keyboard navigation** — Every action reachable via keyboard
-- **Trace inspector** — Visual DAG of every pipeline run (Langfuse-style)
-- **Model management** — Download, switch, and unload models without restart
-- **Backup/Restore** — Export everything to a single archive file
+- **Trace inspector** — Visual logs and system traces fetched from the trace database with pagination and level filters
+- **Model management** — Stream-download models, switch between profiles, and unload models instantly with full SSE download progress tracking
+- **Backup/Restore** — Export everything to a single archive file, or download individual documents directly as raw files
 
 ## Keyboard Shortcuts
 

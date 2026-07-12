@@ -25,11 +25,18 @@ export function ChatView() {
   if (messages.length === 0 && !isStreaming) {
     return (
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center flex-col gap-4">
           <EmptyState
             title="Start a conversation"
             description="Ask questions, upload documents, or research any topic."
           />
+          {error && (
+            <div className="max-w-md w-full px-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2 text-sm text-red-700 dark:text-red-400 text-center">
+                {error}
+              </div>
+            </div>
+          )}
         </div>
         <ChatInput onSend={sendMessage} />
       </div>

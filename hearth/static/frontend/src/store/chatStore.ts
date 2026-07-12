@@ -83,36 +83,93 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         await get().fetchConversations();
       }
 
-      const res = await chatApi.send({
-        conversation_id: convId,
-        query,
-      });
+      let assistantMessageId = '';
+      let assistantMessageCreatedAt = new Date().toISOString();
+      let textBuffer = '';
+      let citationsList: any[] | null = null;
+      let tokenCount: number | null = null;
+      let genMs: number | null = null;
 
-      const assistantMessage: Message = {
-        id: res.message.id,
-        conversation_id: convId,
-        role: 'assistant',
-        content: res.message.content,
-        citations: res.citations ?? null,
-        token_count: res.token_count,
-        generation_ms: res.generation_ms,
-        created_at: res.message.created_at,
-      };
-
+      // Add a temporary assistant message to the state while streaming
+      const assistantMessageTempId = `temp-assistant-${Date.now()}`;
       set((s) => ({
-        messages: [...s.messages, assistantMessage],
+        messages: [
+          ...s.messages,
+          {
+            id: assistantMessageTempId,
+            conversation_id: convId,
+            role: 'assistant',
+            content: '',
+            citations: null,
+            token_count: null,
+            generation_ms: null,
+            created_at: new Date().toISOString(),
+          },
+        ],
+      }));
+
+      await chatApi.sendStream(
+        {
+          conversation_id: convId,
+          query,
+        },
+        (event, data) => {
+          if (event === 'status') {
+            if (data.status === 'searching') {
+              set({ statusMessage: `Searching... (${data.documents} docs)` });
+            } else if (data.status === 'generating') {
+              set({ statusMessage: null });
+            }
+          } else if (event === 'token') {
+            textBuffer += data.token;
+            set((s) => ({
+              streamBuffer: textBuffer,
+              messages: s.messages.map((m) =>
+                m.id === assistantMessageTempId ? { ...m, content: textBuffer } : m
+              ),
+            }));
+          } else if (event === 'done') {
+            assistantMessageId = data.message.id;
+            assistantMessageCreatedAt = data.message.created_at;
+            citationsList = data.citations;
+            tokenCount = data.token_count;
+            genMs = data.generation_ms;
+          } else if (event === 'error') {
+            throw new Error(data.message || 'Stream error');
+          }
+        }
+      );
+
+      // Finalize the messages state with the completed assistant message
+      set((s) => ({
         isStreaming: false,
         streamBuffer: '',
         statusMessage: null,
+        messages: s.messages.map((m) =>
+          m.id === assistantMessageTempId
+            ? {
+                ...m,
+                id: assistantMessageId || m.id,
+                content: textBuffer,
+                citations: citationsList,
+                token_count: tokenCount,
+                generation_ms: genMs,
+                created_at: assistantMessageCreatedAt,
+              }
+            : m
+        ),
       }));
+
+      await get().fetchConversations();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Chat request failed';
-      set({
+      set((s) => ({
         isStreaming: false,
         streamBuffer: '',
         statusMessage: null,
         error: message,
-      });
+        messages: s.messages.filter((m) => m.content !== '' || m.role === 'user'),
+      }));
     }
   },
 

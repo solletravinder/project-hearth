@@ -1,7 +1,5 @@
 """Sample content fixtures for E2E tests."""
 
-from __future__ import annotations
-
 # Sample PDF content (minimal valid PDF structure)
 SAMPLE_PDF = b"""%PDF-1.4
 1 0 obj

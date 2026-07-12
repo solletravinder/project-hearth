@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 from typing import Any
 
@@ -12,6 +10,9 @@ async def create_message(
     role: str,
     content: str,
     context_docs: list[str] | None = None,
+    citations: list[dict] | None = None,
+    token_count: int | None = None,
+    generation_ms: int | None = None,
     tokens_in: int = 0,
     tokens_out: int = 0,
 ) -> dict[str, Any]:
@@ -20,15 +21,18 @@ async def create_message(
     try:
         await conn.execute(
             "INSERT INTO messages "
-            "(id, conversation_id, role, content, context_docs, "
-            "tokens_in, tokens_out) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "(id, conversation_id, role, content, context_docs, citations, "
+            "token_count, generation_ms, tokens_in, tokens_out) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 msg_id,
                 conversation_id,
                 role,
                 content,
                 json.dumps(context_docs) if context_docs else None,
+                json.dumps(citations) if citations else None,
+                token_count or 0,
+                generation_ms or 0,
                 tokens_in,
                 tokens_out,
             ),
@@ -70,6 +74,11 @@ async def get_messages(
                     r["context_docs"] = json.loads(r["context_docs"])
                 except (json.JSONDecodeError, TypeError):
                     r["context_docs"] = None
+            if r.get("citations"):
+                try:
+                    r["citations"] = json.loads(r["citations"])
+                except (json.JSONDecodeError, TypeError):
+                    r["citations"] = None
             results.append(r)
         return results
     finally:

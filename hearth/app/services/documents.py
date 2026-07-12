@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from app.storage.repos.chunks import create_chunk, rebuild_fts
 from app.storage.repos.documents import (

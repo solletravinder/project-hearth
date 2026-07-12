@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import json
 from typing import Any
@@ -125,6 +124,10 @@ async def update_document_status(
 async def delete_document(doc_id: str) -> bool:
     conn = await get_db()
     try:
+        await conn.execute(
+            "DELETE FROM chunks_vec WHERE rowid IN (SELECT rowid FROM chunks WHERE document_id = ?)",
+            (doc_id,),
+        )
         cursor = await conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
         await conn.commit()
         return cursor.rowcount > 0

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from app.storage.repos.notes import (
     create_note,
     delete_note,

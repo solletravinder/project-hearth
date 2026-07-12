@@ -1,6 +1,5 @@
 """Shared Pydantic schemas for API request/response validation."""
 
-from __future__ import annotations
 
 from pydantic import BaseModel
 
@@ -162,6 +161,7 @@ class SearchResult(BaseModel):
     doc_type: str
     token_count: int
     score: float
+    source_type: str = "document"
 
 
 class SearchResponse(BaseModel):

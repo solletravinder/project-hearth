@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from app.storage.database import get_db
@@ -17,12 +15,18 @@ async def create_chunk(
     chunk_id = _new_id()
     conn = await get_db()
     try:
-        await conn.execute(
+        cursor = await conn.execute(
             """INSERT INTO chunks (id, document_id, chunk_index, content, token_count,
                content_hash, embedding)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (chunk_id, document_id, chunk_index, content, token_count, content_hash, embedding),
         )
+        rowid = cursor.lastrowid
+        if embedding is not None and rowid is not None:
+            await conn.execute(
+                "INSERT INTO chunks_vec (rowid, embedding) VALUES (?, ?)",
+                (rowid, embedding),
+            )
         await conn.commit()
         cursor = await conn.execute("SELECT * FROM chunks WHERE id = ?", (chunk_id,))
         row = await cursor.fetchone()

@@ -1,7 +1,5 @@
 """Database schema DDL for Hearth."""
 
-from __future__ import annotations
-
 INIT_SQL = """
 CREATE TABLE IF NOT EXISTS documents (
     id TEXT PRIMARY KEY,
@@ -42,6 +40,17 @@ CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
     content_rowid='rowid'
 );
 
+CREATE VIRTUAL TABLE IF NOT EXISTS chunks_vec USING vec0(
+    embedding float[384] distance_metric=cosine
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
+    title,
+    content,
+    content='notes',
+    content_rowid='rowid'
+);
+
 CREATE TABLE IF NOT EXISTS notes (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -76,6 +85,9 @@ CREATE TABLE IF NOT EXISTS messages (
     role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
     content TEXT NOT NULL,
     context_docs TEXT,
+    citations TEXT,
+    token_count INTEGER DEFAULT 0,
+    generation_ms INTEGER DEFAULT 0,
     tokens_in INTEGER DEFAULT 0,
     tokens_out INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))

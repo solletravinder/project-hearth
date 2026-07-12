@@ -143,7 +143,10 @@ export const search = {
 
 export const conversations = {
   list(page = 1): Promise<{ conversations: Conversation[]; total: number }> {
-    return request(`/conversations/?page=${page}`);
+    // Backend returns { items, page, per_page } — map to { conversations, total }
+    return request<{ items: Conversation[]; page: number; per_page: number }>(
+      `/conversations/?page=${page}`
+    ).then((res) => ({ conversations: res.items ?? [], total: res.items?.length ?? 0 }));
   },
 
   create(title?: string): Promise<Conversation> {
@@ -170,6 +173,55 @@ export const chat = {
       method: 'POST',
       body: JSON.stringify(req),
     });
+  },
+
+  async sendStream(
+    req: ChatRequest,
+    onEvent: (event: string, data: any) => void
+  ): Promise<void> {
+    const res = await fetch('/api/chat/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new ApiError(res.status, body || `Request failed (${res.status})`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('Response body not readable');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith('event: ')) {
+          currentEvent = trimmed.slice(7);
+        } else if (trimmed.startsWith('data: ')) {
+          const dataStr = trimmed.slice(6);
+          try {
+            const data = JSON.parse(dataStr);
+            onEvent(currentEvent, data);
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
+      }
+    }
   },
 };
 
@@ -255,12 +307,34 @@ export const models = {
     return request('/models/status/');
   },
 
-  profiles(): Promise<{ profiles: string[] }> {
+  profiles(): Promise<{ profiles: Record<string, object>; active: string }> {
     return request('/models/profiles/');
+  },
+
+  setProfile(profile: string): Promise<{ profile: string; config: object }> {
+    return request('/models/profile/', {
+      method: 'POST',
+      body: JSON.stringify({ profile }),
+    });
   },
 
   unload(name: string): Promise<void> {
     return request(`/models/${encodeURIComponent(name)}/unload`, { method: 'POST' });
+  },
+
+  downloads(): Promise<{ items: Array<{ name: string; filename: string; size: string; status: string; progress: Record<string, unknown> }> }> {
+    return request('/models/downloads/');
+  },
+
+  download(name: string): Promise<{ status: string; model: string }> {
+    return request('/models/download', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+
+  downloadProgress(name: string): EventSource {
+    return new EventSource(`/api/models/download/${encodeURIComponent(name)}/progress`);
   },
 };
 

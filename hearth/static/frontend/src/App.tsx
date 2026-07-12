@@ -36,9 +36,11 @@ export default function App() {
     <Router>
       <AppLayout onOpenSearch={() => setSearchOpen(true)} onOpenSettings={() => setSettingsOpen(true)}>
         <Routes>
+          <Route path="/" element={<ChatView />} />
+          <Route path="/chat" element={<ChatView />} />
           <Route path="/documents" element={<DocumentsView />} />
           <Route path="/notes" element={<NotesView />} />
-          <Route path="/chat" element={<ChatView />} />
+          <Route path="*" element={<ChatView />} />
         </Routes>
       </AppLayout>
       <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

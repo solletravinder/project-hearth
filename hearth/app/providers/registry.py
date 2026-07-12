@@ -30,6 +30,7 @@ class ProviderRegistry:
         self._embedding_service = EmbeddingService()
         self._ollama: OllamaProvider | None = None
         self._openai: OpenAICompatProvider | None = None
+        self._local_chat = None
 
     # ── Lazy init helpers ──────────────────────────────────────────────
 
@@ -52,6 +53,16 @@ class ProviderRegistry:
             except Exception as e:
                 logger.warning(f"Failed to init OpenAI-compat provider: {e}")
         return self._openai
+
+    def _get_local_chat(self):
+        if self._local_chat is None:
+            try:
+                from app.providers.local_llm import LlamaCppProvider
+
+                self._local_chat = LlamaCppProvider()
+            except Exception as e:
+                logger.warning(f"Failed to init local LLM provider: {e}")
+        return self._local_chat
 
     # ── Embedding selection ────────────────────────────────────────────
 
@@ -79,7 +90,7 @@ class ProviderRegistry:
     def get_chat(self, preferred: str = ""):
         """Return the chat provider selected by settings.
 
-        Falls back: ollama/openai → mock only (no local chat yet)
+        Falls back: ollama/openai → local_chat
         """
         provider_name = preferred or settings.chat_provider
 
@@ -91,9 +102,12 @@ class ProviderRegistry:
             provider = self._get_openai()
             if provider is not None:
                 return provider
+        elif provider_name == "local":
+            provider = self._get_local_chat()
+            if provider is not None:
+                return provider
 
-        # No local chat model yet — return None so caller uses mock
-        return None
+        return self._get_local_chat()
 
     # ── Transcription / OCR ────────────────────────────────────────────
 

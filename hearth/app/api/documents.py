@@ -1,8 +1,9 @@
-from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 
 from app.api.schemas import (
     BatchDeleteRequest,
@@ -132,10 +133,45 @@ async def delete_doc(doc_id: str):
     return None
 
 
+@router.get("/{doc_id}/download")
+async def download_doc(doc_id: str):
+    """Serve the original uploaded file for a document."""
+    doc = await get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    file_path = doc.get("file_path")
+    if not file_path or not Path(file_path).exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    mime = doc.get("mime_type") or "application/octet-stream"
+    return FileResponse(
+        path=file_path,
+        media_type=mime,
+        filename=doc.get("title", Path(file_path).name),
+    )
+
+
 @router.post("/{doc_id}/reindex", response_model=DocumentResponse)
 async def reindex_document(doc_id: str) -> DocumentResponse:
     doc = await get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    # Reset status to pending
     updated = await update_document_status(doc_id, "pending")
+
+    # Re-trigger the full ingestion pipeline in the background
+    file_path = doc.get("file_path")
+    if file_path and Path(file_path).exists():
+        from app.pipeline.orchestrator import run_ingestion
+        asyncio.create_task(
+            run_ingestion(
+                document_id=doc_id,
+                file_path=file_path,
+                doc_type=doc.get("doc_type", "text"),
+                title=doc.get("title", ""),
+            )
+        )
+
     return DocumentResponse(**(updated or {}))

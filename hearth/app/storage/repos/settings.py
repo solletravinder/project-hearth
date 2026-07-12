@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from app.storage.database import get_db
 from app.storage.repos._shared import _now
 

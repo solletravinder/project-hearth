@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { ModelManager } from './ModelManager';
+import { ModelProfileCard } from './ModelProfileCard';
 import { TraceInspector } from './TraceInspector';
 import { Spinner } from '@/components/common/Spinner';
 
@@ -160,7 +161,14 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               {/* Models section */}
               <section>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
-                  Models
+                  Model Profiles
+                </h3>
+                <ModelProfileCard />
+              </section>
+
+              <section>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  Local Models
                 </h3>
                 <ModelManager />
               </section>

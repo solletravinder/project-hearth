@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 
 from app.storage.database import check_db_health, init_db

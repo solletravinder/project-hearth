@@ -1,5 +1,6 @@
 """Speech-to-text using faster-whisper."""
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -44,11 +45,20 @@ class WhisperService:
             await self.load()
         if self._model is not None:
             try:
-                segments, _ = self._model.transcribe(audio_path, beam_size=5)
-                return " ".join([seg.text for seg in segments])
+                # faster-whisper's transcribe() is CPU-bound and blocking.
+                # Run it in a thread-pool executor so it doesn't stall the
+                # asyncio event loop while processing audio.
+                loop = asyncio.get_running_loop()
+
+                def _run_transcribe():
+                    segments, _ = self._model.transcribe(audio_path, beam_size=5)
+                    return " ".join(seg.text for seg in segments)
+
+                return await loop.run_in_executor(None, _run_transcribe)
             except Exception as e:
                 logger.error("Transcription failed: %s; falling back to mock", e)
         return f"[Mock transcription of {Path(audio_path).name}]"
 
 
 whisper_service = WhisperService()
+

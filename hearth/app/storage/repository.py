@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from app.storage.repos._shared import (
     _new_id,
     _now,

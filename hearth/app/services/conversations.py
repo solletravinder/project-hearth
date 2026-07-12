@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from app.storage.repos.conversations import (
     create_conversation,

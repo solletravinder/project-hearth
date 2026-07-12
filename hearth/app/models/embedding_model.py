@@ -53,8 +53,24 @@ class EmbeddingService:
                 return embeddings.tolist() if isinstance(embeddings, np.ndarray) else embeddings
             except Exception as e:
                 logger.error("Embedding failed: %s; falling back to mock", e)
-        # Fallback: random unit vectors
-        return [[random.gauss(0, 0.1) for _ in range(EMBEDDING_DIM)] for _ in texts]
+        # Fallback: deterministic bag-of-words mock embeddings
+        embeddings = []
+        for text in texts:
+            vec = [0.0] * EMBEDDING_DIM
+            words = text.lower().split()
+            for w in words:
+                # Map word to a coordinate index deterministically
+                idx = sum(ord(c) for c in w) % EMBEDDING_DIM
+                vec[idx] += 1.0
+            
+            # Normalize to unit vector
+            norm = sum(x*x for x in vec) ** 0.5
+            if norm > 0:
+                vec = [x / norm for x in vec]
+            else:
+                vec = [1.0 / (EMBEDDING_DIM ** 0.5)] * EMBEDDING_DIM
+            embeddings.append(vec)
+        return embeddings
 
 
 embedding_service = EmbeddingService()

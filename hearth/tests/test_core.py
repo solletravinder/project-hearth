@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from app.core.chunking import chunk_by_characters
 from app.core.pii import redact_patterns
 

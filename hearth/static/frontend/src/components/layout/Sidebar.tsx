@@ -42,7 +42,7 @@ export function Sidebar() {
       ),
       count: conversations?.length ?? 0,
       emptyText: 'No conversations yet',
-      onClick: () => navigate('/'),
+      onClick: () => navigate('/chat'),
     },
   ];
 
