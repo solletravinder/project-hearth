@@ -3,6 +3,19 @@ interface BenchmarkCompleteProps {
 }
 
 export function BenchmarkComplete({ onClose }: BenchmarkCompleteProps) {
+  const handleFinish = async () => {
+    try {
+      await fetch('/api/settings/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wizard_completed: 'true' }),
+      });
+    } catch {
+      // non-critical — wizard won't re-show from this session anyway
+    }
+    onClose();
+  };
+
   return (
     <div className="p-6 space-y-4 text-center">
       <h2 className="text-2xl font-semibold text-green-600">✅ Setup Complete</h2>
@@ -19,7 +32,7 @@ export function BenchmarkComplete({ onClose }: BenchmarkCompleteProps) {
         </ul>
       </div>
       <button
-        onClick={onClose}
+        onClick={handleFinish}
         className="mt-6 px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
       >
         Start Using Hearth

@@ -36,9 +36,19 @@ export default function App() {
   useKeyboard(handleShortcut);
 
   useEffect(() => {
-    // Check if this is first run (no models downloaded)
+    // Show wizard only on first-ever run (persisted via settings DB)
     async function checkFirstRun() {
       try {
+        // 1. Check if wizard was already completed in a prior session
+        const settingsResp = await fetch('/api/settings/');
+        if (settingsResp.ok) {
+          const settingsData = await settingsResp.json();
+          if (settingsData.settings?.wizard_completed === 'true') {
+            return;
+          }
+        }
+
+        // 2. No completion flag — check whether models are loaded
         const resp = await fetch('/api/system/health');
         const data = await resp.json();
         if (!data.models?.generator?.loaded) {
