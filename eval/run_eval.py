@@ -233,9 +233,14 @@ async def run_eval(url, do_upload):
 
     print("\n=== Evaluation Results ===")
     print(f"  Retrieval Hit Rate: {summary['retrieval_hit_rate']:.2%}")
-    print(f"  Faithfulness:       {summary['faithfulness']:.2%}")
-    print(f"  Answer Relevance:   {summary['answer_relevance']:.2%}")
-    print(f"  Latency p95:        {summary['latency_p95_ms']:.0f}ms")
+    if 'faithfulness' in summary:
+        print(f"  Faithfulness:       {summary['faithfulness']:.2%}")
+        print(f"  Answer Relevance:   {summary['answer_relevance']:.2%}")
+        print(f"  Latency p95:        {summary['latency_p95_ms']:.0f}ms")
+    else:
+        print("  Faithfulness:       N/A (no LLM)")
+        print("  Answer Relevance:   N/A (no LLM)")
+        print("  Latency p95:        N/A (no LLM)")
 
     thresholds = json.loads(THRESHOLDS_FILE.read_text())
     print("\n=== Thresholds ===")
