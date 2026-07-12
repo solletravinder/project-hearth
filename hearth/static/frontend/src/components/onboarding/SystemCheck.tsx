@@ -71,11 +71,13 @@ async function checkSystem(): Promise<SystemInfo> {
     };
   } catch {
     // Fallback using Web APIs when backend is unreachable — no hardcoded default values
+    const navExt = navigator as Navigator & { deviceMemory?: number; gpu?: object };
+
     const cpu = `${navigator.hardwareConcurrency ?? '?'} cores${navigator.platform ? ` (${navigator.platform})` : ''}`;
 
     let totalRam = 0;
-    if (navigator.deviceMemory) {
-      totalRam = navigator.deviceMemory;
+    if (navExt.deviceMemory) {
+      totalRam = navExt.deviceMemory;
     }
 
     let diskTotal = 0;
@@ -90,7 +92,7 @@ async function checkSystem(): Promise<SystemInfo> {
 
     let gpuAvailable = false;
     let gpuModel: string | null = null;
-    if (navigator.gpu) {
+    if (navExt.gpu) {
       gpuAvailable = true;
       gpuModel = 'WebGPU compatible adapter';
     }
