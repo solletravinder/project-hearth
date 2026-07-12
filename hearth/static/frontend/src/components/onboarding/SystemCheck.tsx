@@ -57,12 +57,49 @@ function StatusRow({ label, value, status }: { label: string; value: string; sta
 }
 
 async function checkSystem(): Promise<SystemInfo> {
-  // In a real implementation, this would query the backend for system info
-  // For now, we return mock data
-  return {
-    cpu: '12 cores (Apple M2 Max)',
-    ram: { total: 32, available: 24 },
-    disk: { total: 500, available: 200 },
-    gpu: { available: true, model: 'Apple M2 Max (Metal)' },
-  };
+  try {
+    const resp = await fetch('/api/system/info');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const cpu = `${data.cpu_count} cores${data.processor ? ` (${data.processor})` : ''}`;
+    return {
+      cpu,
+      ram: { total: data.ram.total_gb, available: data.ram.available_gb },
+      disk: { total: data.disk.total_gb, available: data.disk.free_gb },
+      gpu: data.gpu || { available: false, model: null },
+    };
+  } catch {
+    // Fallback using Web APIs when backend is unreachable — no hardcoded default values
+    const cpu = `${navigator.hardwareConcurrency ?? '?'} cores${navigator.platform ? ` (${navigator.platform})` : ''}`;
+
+    let totalRam = 0;
+    if (navigator.deviceMemory) {
+      totalRam = navigator.deviceMemory;
+    }
+
+    let diskTotal = 0;
+    let diskFree = 0;
+    try {
+      const storage = await navigator.storage.estimate();
+      if (storage.quota) diskTotal = Math.round(storage.quota / (1024**3));
+      if (storage.usage !== undefined) diskFree = Math.round((storage.quota! - storage.usage) / (1024**3));
+    } catch {
+      // navigator.storage.estimate() not available
+    }
+
+    let gpuAvailable = false;
+    let gpuModel: string | null = null;
+    if (navigator.gpu) {
+      gpuAvailable = true;
+      gpuModel = 'WebGPU compatible adapter';
+    }
+
+    return {
+      cpu,
+      ram: { total: totalRam || 0, available: 0 }, // available RAM unknown from browser APIs
+      disk: { total: diskTotal, available: diskFree },
+      gpu: { available: gpuAvailable, model: gpuModel },
+    };
+  }
 }

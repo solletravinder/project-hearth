@@ -2,7 +2,9 @@ import asyncio
 import json
 import logging
 import os
+import platform
 import shutil
+import subprocess
 import time
 import zipfile
 from pathlib import Path
@@ -19,6 +21,35 @@ router = APIRouter(prefix="/api/system")
 logger = logging.getLogger(__name__)
 
 
+def detect_gpu() -> dict:
+    """Detect GPU via nvidia-smi or wmic. Returns {available, model} with no hardcoded fallback."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            name = result.stdout.strip()
+            if name:
+                return {"available": True, "model": name}
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+    try:
+        result = subprocess.run(
+            ["wmic", "path", "win32_videocontroller", "get", "name"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+            # First line is header "Name", subsequent lines are values
+            for line in lines[1:]:
+                if line and line.lower() != "name":
+                    return {"available": True, "model": line}
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+    return {"available": False, "model": None}
+
+
 @router.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
     db_health = await check_db_health()
@@ -28,6 +59,29 @@ async def health() -> HealthResponse:
         database=db_health,
         models=model_manager.get_status(),
     )
+
+
+@router.get("/info")
+async def system_info():
+    """Return system hardware and platform information."""
+    import psutil
+    mem = psutil.virtual_memory()
+    disk = psutil.disk_usage(str(settings.data_dir))
+    return {
+        "platform": platform.platform(),
+        "processor": platform.processor(),
+        "cpu_count": os.cpu_count() or 0,
+        "ram": {
+            "total_gb": round(mem.total / (1024**3), 1),
+            "available_gb": round(mem.available / (1024**3), 1),
+        },
+        "disk": {
+            "total_gb": round(disk.total / (1024**3), 1),
+            "free_gb": round(disk.free / (1024**3), 1),
+        },
+        "gpu": detect_gpu(),
+        "python_version": platform.python_version(),
+    }
 
 
 @router.get("/logs")
