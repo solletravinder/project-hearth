@@ -10,6 +10,7 @@ from app.models.whisper_model import whisper_service
 
 if TYPE_CHECKING:
     from app.providers.base import EmbeddingProvider
+    from app.providers.local_llm import LlamaCppProvider
     from app.providers.ollama import OllamaProvider
     from app.providers.openai_compat import OpenAICompatProvider
 
@@ -30,7 +31,7 @@ class ProviderRegistry:
         self._embedding_service = EmbeddingService()
         self._ollama: OllamaProvider | None = None
         self._openai: OpenAICompatProvider | None = None
-        self._local_chat = None
+        self._local_chat: LlamaCppProvider | None = None
 
     # ── Lazy init helpers ──────────────────────────────────────────────
 
