@@ -128,7 +128,7 @@ async def check_model_available(url):
             data = resp.json()
             providers = data.get('providers', {})
             for name, info in providers.items():
-                if name != 'local' and info.get('available'):
+                if info.get('available'):
                     return True
     except Exception:
         pass

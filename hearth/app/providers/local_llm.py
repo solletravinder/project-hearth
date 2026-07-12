@@ -67,6 +67,14 @@ def _get_llm():
 class LlamaCppProvider:
     """Chat provider that loads GGUF models in-process via llama-cpp-python."""
 
+    async def check_available(self) -> bool:
+        """Check if llama-cpp-python is installed and a GGUF model exists."""
+        try:
+            import llama_cpp  # noqa: F401
+        except ImportError:
+            return False
+        return _find_gguf(settings.default_model) is not None
+
     async def chat(
         self,
         messages: list[dict],

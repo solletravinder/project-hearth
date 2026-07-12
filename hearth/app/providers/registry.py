@@ -126,10 +126,15 @@ class ProviderRegistry:
         """Return availability status of all providers."""
         ollama = self._get_ollama()
         openai = self._get_openai()
+        local_chat = self._get_local_chat()
 
         return {
             "providers": {
-                "local": {"available": True, "type": "local"},
+                "local": {
+                    "available": local_chat is not None
+                    and await local_chat.check_available(),
+                    "type": "local",
+                },
                 "ollama": {
                     "available": ollama is not None and await ollama.check_available(),
                     "type": "ollama",
