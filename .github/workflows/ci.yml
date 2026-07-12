@@ -79,24 +79,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
 
+      - name: Install backend deps (with local-llm extra)
+        working-directory: hearth
+        run: uv sync --all-extras
+
       - name: Install eval dependencies
         run: |
           pip install sentence-transformers scikit-learn httpx numpy
-
-      # ── Download llama.cpp server ──────────────────────────────────────
-      - name: Cache llama.cpp server
-        id: cache-llama
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/llama-cpp
-          key: llama-b9977-ubuntu-x64
-
-      - name: Download llama.cpp server
-        if: steps.cache-llama.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ~/.local/share/llama-cpp
-          curl -sL https://github.com/ggml-org/llama.cpp/releases/download/b9977/llama-b9977-bin-ubuntu-x64.tar.gz \
-            | tar xz -C ~/.local/share/llama-cpp --strip-components=1
 
       # ── Download model ─────────────────────────────────────────────────
       - name: Cache LLM model
@@ -114,25 +103,10 @@ jobs:
             -o hearth/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf
 
       # ── Start services ─────────────────────────────────────────────────
-      - name: Start llama.cpp server
-        working-directory: hearth
-        run: |
-          ~/.local/share/llama-cpp/llama-server \
-            -m models/Llama-3.2-1B-Instruct-Q4_K_M.gguf \
-            --host 0.0.0.0 --port 8080 \
-            -ngl 0 \
-            --ctx-size 2048 &
-          echo "Waiting for llama-server to be ready..."
-          for i in $(seq 1 30); do
-            curl -s http://localhost:8080/health && break
-            sleep 2
-          done
-
       - name: Start backend
         working-directory: hearth
         env:
-          HEARTH_CHAT_PROVIDER: openai
-          HEARTH_OPENAI_BASE_URL: http://localhost:8080/v1
+          HEARTH_CHAT_PROVIDER: local
           HEARTH_DEFAULT_MODEL: Llama-3.2-1B-Instruct-Q4_K_M
         run: |
           uv run uvicorn app.main:app --host 0.0.0.0 --port 8765 &
