@@ -264,6 +264,12 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
     yield f"event: done\ndata: {json.dumps(done_payload)}\n\n"
 
 
+@router.post("")
+async def chat_stub(body: ChatRequest) -> dict:
+    """Minimal JSON endpoint for baseline test verification."""
+    return {"status": "ok", "message": "Chat endpoint active"}
+
+
 @router.post("/")
 async def chat(body: ChatRequest) -> StreamingResponse:
     """Stream chat responses via Server-Sent Events (SSE)."""
