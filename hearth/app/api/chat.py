@@ -1,12 +1,12 @@
-
 import asyncio
 import json
 import logging
 import re
 import time
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.api.schemas import (
@@ -18,6 +18,7 @@ from app.api.schemas import (
 from app.config import settings
 from app.core.pii import redact_patterns
 from app.models.ner_model import ner_service
+from app.models.whisper_model import whisper_service
 from app.providers.registry import provider_registry
 from app.storage.repos.conversations import (
     create_conversation,
@@ -162,7 +163,7 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
     # Gather recent conversation history
     history = await get_messages(conv_id, limit=10)
     provider_messages = [{"role": "system", "content": system_msg}]
-    
+
     # Exclude system prompt and the last assistant message if regenerating
     msgs_to_append = history[:-1] if is_regen else history
     for m in msgs_to_append:
@@ -307,3 +308,35 @@ async def branch(body: BranchRequest):
         branch_from=body.conversation_id,
     )
     return {"conversation": branch_conv}
+
+
+@router.post("/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):  # noqa: B008
+    """Transcribe an audio file to text using the Whisper service."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No audio file provided")
+
+    allowed = {".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm"}
+    ext = Path(file.filename).suffix.lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail=f"Unsupported audio format: {ext}")
+
+    temp_dir = settings.data_dir / "tmp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    temp_path = temp_dir / f"voice_{int(time.time())}_{file.filename}"
+
+    try:
+        content = await file.read()
+        temp_path.write_bytes(content)
+
+        text = await whisper_service.transcribe(str(temp_path))
+        if not text or text.startswith("[Mock transcription"):
+            logger.warning("Whisper returned mock/empty transcription for %s", file.filename)
+
+        return {"text": text}
+    except Exception as e:
+        logger.error("Transcription failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {e}") from e
+    finally:
+        if temp_path.exists():
+            temp_path.unlink(missing_ok=True)
