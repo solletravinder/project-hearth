@@ -15,11 +15,11 @@ dependencies = [
     "python-multipart>=0.0.12",
     "aiofiles>=24.0.0",
     "aiosqlite>=0.20.0",
-    "httpx>=0.28.0",
+    "httpx2>=2.5.0",
 ]
 [project.optional-dependencies]
 local-llm = ["llama-cpp-python>=0.3.0"]
-dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "pytest-cov>=5.0.0", "httpx>=0.28.0", "ruff>=0.7.0", "mypy>=1.13.0"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "pytest-cov>=5.0.0", "httpx2>=2.5.0", "ruff>=0.7.0", "mypy>=1.13.0"]
 
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]

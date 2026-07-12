@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-import httpx
+import httpx2
 
 from metrics import (
     faithfulness,
@@ -54,7 +54,7 @@ def parse_sse_response(response_text):
 
 async def upload_documents(url):
     """Upload all test documents to the backend."""
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx2.AsyncClient(timeout=60.0) as client:
         for doc_file in sorted(DOCUMENTS_DIR.glob('*.txt')):
             with open(doc_file, 'rb') as f:
                 content = f.read()
@@ -71,7 +71,7 @@ async def upload_documents(url):
 
 async def wait_for_documents_ready(url, timeout=120):
     """Poll document status until all eval documents are ready."""
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx2.AsyncClient(timeout=60.0) as client:
         await asyncio.sleep(1)
 
         start = time.time()
@@ -99,7 +99,7 @@ async def wait_for_documents_ready(url, timeout=120):
 
 async def search_documents(url, query):
     """Search via /api/search/ and return result document titles."""
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx2.AsyncClient(timeout=30.0) as client:
         resp = await client.get(f'{url}/api/search/', params={'q': query})
         resp.raise_for_status()
         data = resp.json()
@@ -108,7 +108,7 @@ async def search_documents(url, query):
 
 async def run_query(url, query):
     """Send query to running Hearth backend and parse SSE response."""
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx2.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             f'{url}/api/chat/',
             json={'query': query}
@@ -121,7 +121,7 @@ async def run_query(url, query):
 async def check_model_available(url):
     """Check if a real LLM provider is available (not mock)."""
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx2.AsyncClient(timeout=5.0) as client:
             # Check provider availability
             resp = await client.get(f'{url}/api/models/providers')
             resp.raise_for_status()

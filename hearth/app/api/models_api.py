@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-import httpx
+import httpx2
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -52,7 +52,7 @@ async def _do_download(model_name: str, filename: str, url: str) -> None:
     }
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=None) as client, \
+        async with httpx2.AsyncClient(follow_redirects=True, timeout=None) as client, \
                 client.stream("GET", url) as response:
             response.raise_for_status()
             total = int(response.headers.get("content-length", 0))

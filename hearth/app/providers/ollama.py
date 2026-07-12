@@ -9,7 +9,7 @@ import json
 import logging
 from collections.abc import AsyncIterator
 
-import httpx
+import httpx2
 
 from app.config import settings
 
@@ -20,15 +20,15 @@ class OllamaProvider:
     """Provider that calls a local Ollama instance."""
 
     def __init__(self) -> None:
-        self._client: httpx.AsyncClient | None = None
+        self._client: httpx2.AsyncClient | None = None
         self._available: bool | None = None
 
     @property
-    def client(self) -> httpx.AsyncClient:
+    def client(self) -> httpx2.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(
+            self._client = httpx2.AsyncClient(
                 base_url=settings.ollama_base_url,
-                timeout=httpx.Timeout(120.0, connect=5.0),
+                timeout=httpx2.Timeout(120.0, connect=5.0),
             )
         return self._client
 

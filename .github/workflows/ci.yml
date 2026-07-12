@@ -85,7 +85,7 @@ jobs:
 
       - name: Install eval dependencies
         run: |
-          pip install sentence-transformers scikit-learn httpx numpy
+          pip install sentence-transformers scikit-learn httpx2 numpy
 
       # ── Download model ─────────────────────────────────────────────────
       - name: Cache LLM model
