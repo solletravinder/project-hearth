@@ -1,14 +1,21 @@
 """Embedding model using sentence-transformers."""
 
+from __future__ import annotations
+
 import logging
+from typing import Any
+
+from app.config import settings
+
+np: Any = None
 
 try:
-    import numpy as np
+    import numpy as _np
 
+    np = _np
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
-    np = None  # type: ignore[assignment]
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -16,8 +23,6 @@ try:
     HAS_SENTENCE_TRANSFORMERS = True
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
-
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
