@@ -223,13 +223,13 @@ async def run_eval(url, do_upload):
     # ── Summary ──────────────────────────────────────────────────────────
     summary = {
         'retrieval_hit_rate': avg_retrieval,
-        'faithfulness': (sum(chat_faithfulness) / len(chat_faithfulness)
-                         if chat_faithfulness else 0.0),
-        'answer_relevance': (sum(chat_relevance) / len(chat_relevance)
-                             if chat_relevance else 0.0),
-        'latency_p95_ms': (float(sorted(chat_latency)[int(len(chat_latency) * 0.95)])
-                           if chat_latency else 0.0),
     }
+    if chat_faithfulness:
+        summary['faithfulness'] = sum(chat_faithfulness) / len(chat_faithfulness)
+        summary['answer_relevance'] = sum(chat_relevance) / len(chat_relevance)
+        summary['latency_p95_ms'] = float(
+            sorted(chat_latency)[int(len(chat_latency) * 0.95)]
+        )
 
     print("\n=== Evaluation Results ===")
     print(f"  Retrieval Hit Rate: {summary['retrieval_hit_rate']:.2%}")
