@@ -1,7 +1,6 @@
 """Embedding model using sentence-transformers."""
 
 import logging
-import random
 
 try:
     import numpy as np
@@ -62,7 +61,7 @@ class EmbeddingService:
                 # Map word to a coordinate index deterministically
                 idx = sum(ord(c) for c in w) % EMBEDDING_DIM
                 vec[idx] += 1.0
-            
+
             # Normalize to unit vector
             norm = sum(x*x for x in vec) ** 0.5
             if norm > 0:

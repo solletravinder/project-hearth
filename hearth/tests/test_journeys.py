@@ -1,7 +1,10 @@
 """End-to-end journey tests for Hearth core functionality."""
 
+import concurrent.futures
+import json
 import os
 import tempfile
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -58,9 +61,6 @@ def test_sample_content(sample_pdf, sample_text):
     assert len(sample_text) > 0
 
 
-import json
-import concurrent.futures
-
 def parse_sse_response(response):
     """Helper to parse event streams from a StreamingResponse."""
     event = None
@@ -83,8 +83,6 @@ def parse_sse_response(response):
                 done_data = data
     return "".join(tokens), done_data
 
-
-import time
 
 def wait_for_document_ready(client, doc_id, timeout=10):
     """Poll document status until it becomes ready or times out."""
@@ -117,7 +115,7 @@ def test_ingest_and_query_flow(client, sample_pdf):
         json={"query": "What is Hearth?", "context_docs": [doc_id]}
     )
     assert query_response.status_code == 200, f"Query failed: {query_response.text}"
-    
+
     text, done = parse_sse_response(query_response)
     assert len(text) > 0
     assert done is not None
@@ -250,7 +248,7 @@ def test_hybrid_search_ranking(client):
     search_resp = client.get("/api/search/", params={"q": "hearth"})
     assert search_resp.status_code == 200
     results = search_resp.json()["results"]
-    
+
     # Doc 1 (highly relevant to "hearth") should rank first
     assert len(results) > 0
     assert results[0]["document_id"] == doc1_id

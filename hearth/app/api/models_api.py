@@ -52,16 +52,16 @@ async def _do_download(model_name: str, filename: str, url: str) -> None:
     }
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=None) as client:
-            async with client.stream("GET", url) as response:
-                response.raise_for_status()
-                total = int(response.headers.get("content-length", 0))
-                _download_progress[model_name]["total"] = total
+        async with httpx.AsyncClient(follow_redirects=True, timeout=None) as client, \
+                client.stream("GET", url) as response:
+            response.raise_for_status()
+            total = int(response.headers.get("content-length", 0))
+            _download_progress[model_name]["total"] = total
 
-                with open(dest, "wb") as f:
-                    async for chunk in response.aiter_bytes(chunk_size=65_536):  # 64 KB
-                        f.write(chunk)
-                        _download_progress[model_name]["downloaded"] += len(chunk)
+            with open(dest, "wb") as f:
+                async for chunk in response.aiter_bytes(chunk_size=65_536):  # 64 KB
+                    f.write(chunk)
+                    _download_progress[model_name]["downloaded"] += len(chunk)
 
         _download_progress[model_name]["status"] = "done"
         logger.info("Model download complete: %s → %s", model_name, dest)

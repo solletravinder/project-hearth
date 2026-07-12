@@ -50,7 +50,8 @@ class WhisperService:
                 # asyncio event loop while processing audio.
                 loop = asyncio.get_running_loop()
 
-                def _run_transcribe():
+                def _run_transcribe() -> str:
+                    assert self._model is not None  # narrowed by caller
                     segments, _ = self._model.transcribe(audio_path, beam_size=5)
                     return " ".join(seg.text for seg in segments)
 

@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import os
 import platform
@@ -40,7 +39,7 @@ def detect_gpu() -> dict:
             capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
-            lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+            lines = [ln.strip() for ln in result.stdout.strip().splitlines() if ln.strip()]
             # First line is header "Name", subsequent lines are values
             for line in lines[1:]:
                 if line and line.lower() != "name":
@@ -94,11 +93,11 @@ async def get_logs(page: int = 1, per_page: int = 50):
             (per_page, offset)
         )
         rows = await cursor.fetchall()
-        
+
         count_cursor = await db.execute("SELECT COUNT(*) FROM trace_log")
         total_row = await count_cursor.fetchone()
         total = total_row[0] if total_row else 0
-        
+
         return {
             "items": [dict(r) for r in rows],
             "page": page,
@@ -113,13 +112,13 @@ async def get_logs(page: int = 1, per_page: int = 50):
 async def create_backup():
     db_path = settings.resolved_db_path
     uploads_dir = settings.data_dir / "uploads"
-    
+
     backups_dir = settings.data_dir / "backups"
     backups_dir.mkdir(parents=True, exist_ok=True)
-    
+
     backup_filename = f"hearth_backup_{int(time.time())}.zip"
     backup_path = backups_dir / backup_filename
-    
+
     def make_zip():
         with zipfile.ZipFile(str(backup_path), 'w', zipfile.ZIP_DEFLATED) as zip_file:
             # 1. Backup DB file
@@ -132,7 +131,7 @@ async def create_backup():
                         full_path = Path(root) / file
                         relative_path = Path("uploads") / full_path.relative_to(uploads_dir)
                         zip_file.write(str(full_path), str(relative_path))
-                        
+
     loop = asyncio.get_running_loop()
     try:
         await loop.run_in_executor(None, make_zip)
@@ -143,13 +142,13 @@ async def create_backup():
         }
     except Exception as e:
         logger.error("Backup creation failed: %s", e)
-        raise HTTPException(status_code=500, detail=f"Backup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Backup failed: {e}") from e
 
 
 @router.post("/restore")
 async def restore_backup(filename: str = ""):
     backups_dir = settings.data_dir / "backups"
-    
+
     if filename:
         backup_path = backups_dir / filename
     else:
@@ -159,26 +158,26 @@ async def restore_backup(filename: str = ""):
             raise HTTPException(status_code=404, detail="No backup files found")
         backups.sort(key=lambda x: x.stat().st_mtime)
         backup_path = backups[-1]
-        
+
     if not backup_path.exists():
         raise HTTPException(status_code=404, detail=f"Backup file not found: {backup_path.name}")
-        
+
     db_path = settings.resolved_db_path
     uploads_dir = settings.data_dir / "uploads"
-    
+
     def extract_zip():
         # Clear uploads folder first
         if uploads_dir.exists():
             shutil.rmtree(str(uploads_dir))
         uploads_dir.mkdir(parents=True, exist_ok=True)
-        
+
         with zipfile.ZipFile(str(backup_path), 'r') as zip_file:
             for item in zip_file.namelist():
                 if item == db_path.name:
                     zip_file.extract(item, path=str(db_path.parent))
                 elif item.startswith("uploads/"):
                     zip_file.extract(item, path=str(settings.data_dir))
-                    
+
     loop = asyncio.get_running_loop()
     try:
         await loop.run_in_executor(None, extract_zip)
@@ -188,4 +187,4 @@ async def restore_backup(filename: str = ""):
         }
     except Exception as e:
         logger.error("Backup restoration failed: %s", e)
-        raise HTTPException(status_code=500, detail=f"Restore failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Restore failed: {e}") from e

@@ -96,11 +96,13 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
     if conv_id:
         conv = await get_conversation(conv_id)
         if not conv:
-            yield f"event: error\ndata: {json.dumps({'message': 'Conversation not found', 'code': 'NOT_FOUND'})}\n\n"
+            msg = {"message": "Conversation not found", "code": "NOT_FOUND"}
+            yield f"event: error\ndata: {json.dumps(msg)}\n\n"
             return
     else:
         if is_regen:
-            yield f"event: error\ndata: {json.dumps({'message': 'Conversation ID required for regeneration', 'code': 'BAD_REQUEST'})}\n\n"
+            msg = {"message": "Conversation ID required for regeneration", "code": "BAD_REQUEST"}
+            yield f"event: error\ndata: {json.dumps(msg)}\n\n"
             return
         conv = await create_conversation(title=body.query[:80])
         conv_id = conv["id"]
@@ -111,7 +113,8 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         history = await get_messages(conv_id, limit=20)
         user_msgs = [m for m in history if m["role"] == "user"]
         if not user_msgs:
-            yield f"event: error\ndata: {json.dumps({'message': 'No user messages to regenerate', 'code': 'BAD_REQUEST'})}\n\n"
+            msg = {"message": "No user messages to regenerate", "code": "BAD_REQUEST"}
+            yield f"event: error\ndata: {json.dumps(msg)}\n\n"
             return
         query = user_msgs[-1]["content"]
     else:
@@ -142,7 +145,8 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         limit=5
     )
 
-    yield f"event: status\ndata: {json.dumps({'status': 'searching', 'documents': len(chunks)})}\n\n"
+    searching_msg = json.dumps({"status": "searching", "documents": len(chunks)})
+    yield f"event: status\ndata: {searching_msg}\n\n"
     await asyncio.sleep(0.2)
 
     # 3. Build Prompt Context
@@ -158,7 +162,11 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         "You are Hearth, a private, offline AI notes & research assistant. "
         "Answer the user's question based strictly on the provided context."
     )
-    system_msg = f"{base_system_prompt}\n\nContext:\n{context_str}" if context_str else base_system_prompt
+    system_msg = (
+        f"{base_system_prompt}\n\nContext:\n{context_str}"
+        if context_str
+        else base_system_prompt
+    )
 
     # Gather recent conversation history
     history = await get_messages(conv_id, limit=10)
@@ -266,7 +274,7 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
 
 
 @router.post("")
-async def chat_stub(body: ChatRequest) -> dict:
+async def chat_stub(body: ChatRequest) -> dict:  # noqa: ARG001
     """Minimal JSON endpoint for baseline test verification."""
     return {"status": "ok", "message": "Chat endpoint active"}
 

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import suppress
 
 import aiosqlite
 
@@ -21,11 +22,11 @@ async def get_db() -> aiosqlite.Connection:
         conn.row_factory = aiosqlite.Row
         await conn.execute("PRAGMA journal_mode=WAL;")
         await conn.execute("PRAGMA foreign_keys=ON;")
-        
+
         import sqlite_vec
         await conn.enable_load_extension(True)
         await conn.load_extension(sqlite_vec.loadable_path())
-        
+
         return conn
 
 
@@ -34,18 +35,16 @@ async def init_db() -> None:
     conn = await get_db()
     try:
         await conn.executescript(INIT_SQL)
-        
+
         # Add new columns to messages table if they don't exist
         for col_def in [
             ("citations", "TEXT"),
             ("token_count", "INTEGER DEFAULT 0"),
             ("generation_ms", "INTEGER DEFAULT 0"),
         ]:
-            try:
+            with suppress(Exception):
                 await conn.execute(f"ALTER TABLE messages ADD COLUMN {col_def[0]} {col_def[1]};")
-            except Exception:
-                pass  # column already exists
-                
+
         await conn.commit()
         logger.info("Database initialized")
     finally:

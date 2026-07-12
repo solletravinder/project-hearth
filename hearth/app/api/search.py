@@ -1,6 +1,8 @@
 import logging
 import re
 import struct
+from typing import Any
+
 from fastapi import APIRouter, Query
 
 from app.api.schemas import SearchResponse, SearchResult
@@ -35,7 +37,7 @@ async def perform_hybrid_search(
             query_vector = embeddings[0] if embeddings else None
             if query_vector:
                 packed = struct.pack(f"{len(query_vector)}f", *query_vector)
-                
+
                 # Build vector query
                 vec_query = """
                     SELECT c.id, c.document_id, c.content, c.token_count,
@@ -47,7 +49,7 @@ async def perform_hybrid_search(
                     WHERE chunks_vec.embedding MATCH ?
                       AND k = 50
                 """
-                params = [packed]
+                params: list[Any] = [packed]
                 if doc_type:
                     vec_query += " AND d.doc_type = ?"
                     params.append(doc_type)
@@ -55,7 +57,7 @@ async def perform_hybrid_search(
                     placeholders = ",".join("?" for _ in document_ids)
                     vec_query += f" AND c.document_id IN ({placeholders})"
                     params.extend(document_ids)
-                
+
                 cursor = await db.execute(vec_query, params)
                 vec_rows = await cursor.fetchall()
                 for row in vec_rows:
@@ -93,18 +95,18 @@ async def perform_hybrid_search(
                     JOIN documents d ON c.document_id = d.id
                     WHERE chunks_fts MATCH ?
                 """
-                params = [cleaned_q]
+                fts_params: list[Any] = [cleaned_q]
                 if doc_type:
                     fts_query_str += " AND d.doc_type = ?"
-                    params.append(doc_type)
+                    fts_params.append(doc_type)
                 if document_ids:
                     placeholders = ",".join("?" for _ in document_ids)
                     fts_query_str += f" AND c.document_id IN ({placeholders})"
-                    params.extend(document_ids)
-                
+                    fts_params.extend(document_ids)
+
                 fts_query_str += " ORDER BY rank LIMIT 50"
-                
-                cursor = await db.execute(fts_query_str, params)
+
+                cursor = await db.execute(fts_query_str, fts_params)
                 fts_rows = await cursor.fetchall()
                 for row in fts_rows:
                     row_dict = dict(row)
@@ -130,18 +132,18 @@ async def perform_hybrid_search(
             min_bm25 = min(bm25_scores)
             max_bm25 = max(bm25_scores)
             bm25_range = max_bm25 - min_bm25
-            for chunk_id, c in fts_results.items():
+            for _chunk_id, c in fts_results.items():
                 if bm25_range > 0:
                     c["normalized_bm25"] = (max_bm25 - c["bm25_score"]) / bm25_range
                 else:
                     c["normalized_bm25"] = 1.0
-        
+
         # Merge results
         combined = {}
         for chunk_id, vec_res in vector_results.items():
             combined[chunk_id] = vec_res
             combined[chunk_id]["normalized_bm25"] = 0.0
-            
+
         for chunk_id, fts_res in fts_results.items():
             if chunk_id in combined:
                 combined[chunk_id]["normalized_bm25"] = fts_res.get("normalized_bm25", 0.0)
@@ -149,7 +151,7 @@ async def perform_hybrid_search(
             else:
                 combined[chunk_id] = fts_res
                 # cosine_sim remains 0.0
-                
+
         # Calculate hybrid score
         for c in combined.values():
             cos_sim = c.get("cosine_sim", 0.0)
@@ -176,7 +178,7 @@ async def search(
         return SearchResponse(results=[], total=0, page=page, per_page=per_page, query=q)
 
     offset = (page - 1) * per_page
-    
+
     # Perform hybrid search for documents
     doc_results = await perform_hybrid_search(
         q=q,
@@ -200,14 +202,14 @@ async def search(
                 (q,),
             )
             note_rows = await note_cursor.fetchall()
-            
+
             # Normalize notes BM25 scores
             if note_rows:
                 bm25_scores = [float(row["bm25_score"]) for row in note_rows]
                 min_bm25 = min(bm25_scores)
                 max_bm25 = max(bm25_scores)
                 bm25_range = max_bm25 - min_bm25
-                
+
                 for row in note_rows:
                     row_dict = dict(row)
                     content = row_dict["content"] or ""
