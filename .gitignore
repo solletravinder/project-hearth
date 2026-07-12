@@ -40,3 +40,4 @@ hearth/.env
 *.log
 eval/results/
 .claude/
+.playwright-mcp/
