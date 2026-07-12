@@ -119,15 +119,16 @@ async def run_query(url, query):
 
 
 async def check_model_available(url):
-    """Check if a real LLM model is loaded (not mock)."""
+    """Check if a real LLM provider is available (not mock)."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.get(f'{url}/api/models/status')
+            # Check provider availability
+            resp = await client.get(f'{url}/api/models/providers')
             resp.raise_for_status()
             data = resp.json()
-            models = data.get('models', {})
-            for _name, info in models.items():
-                if info.get('status') == 'ready':
+            providers = data.get('providers', {})
+            for name, info in providers.items():
+                if name != 'local' and info.get('available'):
                     return True
     except Exception:
         pass
