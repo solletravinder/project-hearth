@@ -163,12 +163,12 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         "Answer the user's question based strictly on the provided context."
     )
     citation_instruction = (
-        "\n\nWhen your answer draws from a provided source, cite it inline "
-        "using the format [Source N] where N is the source number "
-        "(e.g. [Source 1], [Source 2]). Always cite every source you use."
+        "\n\nRULE: Every sentence MUST end with [Source N] citing the source number. "
+        "Example: The coverage limit is $50,000 [Source 1]. "
+        "Never answer without [Source N] citations."
     )
     system_msg = (
-        f"{base_system_prompt}{citation_instruction}\n\nContext:\n{context_str}"
+        f"{base_system_prompt}\n\nContext:\n{context_str}{citation_instruction}"
         if context_str
         else base_system_prompt
     )
