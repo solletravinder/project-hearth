@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Run Hearth evaluation against golden Q&A corpus."""
+"""Run Hearth evaluation against golden Q&A corpus.
+
+Tests two independent layers:
+  1. Search retrieval quality (works without a real LLM — uses /api/search/)
+  2. Full chat pipeline (requires an LLM — uses /api/chat/)
+"""
+import asyncio
 import json
 import sys
 import time
 from pathlib import Path
 
 import httpx
-import numpy as np
 
 from metrics import (
-    retrieval_hit_rate,
     faithfulness,
     answer_relevance_score,
 )
@@ -28,23 +32,22 @@ def load_golden():
 
 def parse_sse_response(response_text):
     """Parse SSE response to extract answer and citations from 'done' event."""
-    import json as json_module
     answer = ""
     citations = []
 
     lines = response_text.strip().split('\n')
-    for i, line in enumerate(lines):
+    for line in lines:
         line = line.strip()
         if not line:
             continue
         if line.startswith('data: '):
             try:
-                data = json_module.loads(line[6:])
+                data = json.loads(line[6:])
                 if 'citations' in data:
                     citations = data['citations']
                 if 'message' in data and 'content' in data['message']:
                     answer = data['message']['content']
-            except json_module.JSONDecodeError:
+            except json.JSONDecodeError:
                 continue
     return answer, citations
 
@@ -68,7 +71,6 @@ async def upload_documents(url):
 
 async def wait_for_documents_ready(url, timeout=120):
     """Poll document status until all eval documents are ready."""
-    import asyncio
     async with httpx.AsyncClient(timeout=60.0) as client:
         await asyncio.sleep(1)
 
@@ -88,11 +90,20 @@ async def wait_for_documents_ready(url, timeout=120):
                 print(f"  All {len(items)} documents ready")
                 return
 
-            ready_count = sum(1 for i in items if i.get('status') == 'ready')
+            ready_count = sum(1 for item in items if item.get('status') == 'ready')
             print(f"  Waiting for documents... ({ready_count}/{len(items)} ready)")
             await asyncio.sleep(2)
 
         raise RuntimeError("Documents did not become ready in time")
+
+
+async def search_documents(url, query):
+    """Search via /api/search/ and return result document titles."""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.get(f'{url}/api/search/', params={'q': query, 'doc_type': 'document'})
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get('results', [])
 
 
 async def run_query(url, query):
@@ -107,6 +118,22 @@ async def run_query(url, query):
         return {'answer': answer, 'citations': citations}
 
 
+async def check_model_available(url):
+    """Check if a real LLM model is loaded (not mock)."""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f'{url}/api/models/status')
+            resp.raise_for_status()
+            data = resp.json()
+            models = data.get('models', {})
+            for _name, info in models.items():
+                if info.get('status') == 'ready':
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 async def run_eval(url, do_upload):
     if do_upload:
         print("=== Uploading test documents ===")
@@ -115,87 +142,135 @@ async def run_eval(url, do_upload):
         await wait_for_documents_ready(url)
 
     golden = load_golden()
+    has_llm = await check_model_available(url)
+    print(f"\n  LLM available: {has_llm}")
 
-    results = {
-        'retrieval_hit_rates': [],
-        'faithfulness_scores': [],
-        'answer_relevance_scores': [],
-        'latency_ms': [],
-    }
-
+    # ── Phase 1: Search retrieval quality ────────────────────────────────
+    print("\n=== Phase 1: Search Retrieval ===")
+    retrieval_results = []
     for i, qa in enumerate(golden):
         query = qa['question']
         golden_docs = qa['relevant_documents']
-        claims = qa.get('claims', [])
 
         start = time.time()
-        response = await run_query(url, query)
+        search_hits = await search_documents(url, query)
         latency_ms = (time.time() - start) * 1000
-        results['latency_ms'].append(latency_ms)
 
-        # Extract document titles from citations
-        predicted_docs = [c.get('doc_title', '') for c in response.get('citations', [])]
-        citation_texts = [c.get('text', '') for c in response.get('citations', [])]
-        answer = response.get('answer', '')
+        # Extract document titles from search results
+        predicted_docs = [r.get('doc_title', '') for r in search_hits]
+        scores = [r.get('score', 0.0) for r in search_hits]
 
-        # Match on document title (case-insensitive substring)
         def doc_match(pred_doc, golden_doc):
-            return golden_doc.lower() in pred_doc.lower() or pred_doc.lower() in golden_doc.lower()
+            return (golden_doc.lower() in pred_doc.lower()
+                    or pred_doc.lower() in golden_doc.lower())
 
-        hit_rate = sum(
-            1 for g in golden_docs if any(doc_match(p, g) for p in predicted_docs)
-        ) / len(golden_docs) if golden_docs else 0.0
-
-        results['retrieval_hit_rates'].append(hit_rate)
-        results['faithfulness_scores'].append(
-            faithfulness(claims, citation_texts)
+        hit_rate = (
+            sum(1 for g in golden_docs
+                if any(doc_match(p, g) for p in predicted_docs))
+            / len(golden_docs) if golden_docs else 0.0
         )
-        results['answer_relevance_scores'].append(
-            answer_relevance_score(query, answer)
-        )
+        retrieval_results.append(hit_rate)
 
         print(f"  Q{i+1}: hit_rate={hit_rate:.2%} "
-              f"faithfulness={results['faithfulness_scores'][-1]:.2%} "
-              f"relevance={results['answer_relevance_scores'][-1]:.2%} "
-              f"latency={latency_ms:.0f}ms")
+              f"top_score={scores[0]:.4f} latency={latency_ms:.0f}ms"
+              f" docs={[d for d in predicted_docs[:3]]}")
 
-        # Debug: print citation titles
-        if predicted_docs:
-            print(f"    Cited docs: {predicted_docs}")
+    avg_retrieval = sum(retrieval_results) / len(retrieval_results)
+    print(f"\n  Search Retrieval Hit Rate: {avg_retrieval:.2%}")
 
+    # ── Phase 2: Full chat pipeline (LLM-dependent) ─────────────────────
+    chat_latency = []
+    chat_faithfulness = []
+    chat_relevance = []
+
+    if has_llm:
+        print("\n=== Phase 2: Chat Pipeline ===")
+        for i, qa in enumerate(golden):
+            query = qa['question']
+            claims = qa.get('claims', [])
+
+            start = time.time()
+            response = await run_query(url, query)
+            latency_ms = (time.time() - start) * 1000
+            chat_latency.append(latency_ms)
+
+            predicted_docs = [c.get('doc_title', '') for c in response.get('citations', [])]
+            citation_texts = [c.get('text', '') for c in response.get('citations', [])]
+            answer = response.get('answer', '')
+
+            def doc_match(pred_doc, golden_doc):
+                return (golden_doc.lower() in pred_doc.lower()
+                        or pred_doc.lower() in golden_doc.lower())
+
+            golden_docs = qa['relevant_documents']
+            hit_rate = (
+                sum(1 for g in golden_docs
+                    if any(doc_match(p, g) for p in predicted_docs))
+                / len(golden_docs) if golden_docs else 0.0
+            )
+
+            chat_faithfulness.append(faithfulness(claims, citation_texts))
+            chat_relevance.append(answer_relevance_score(query, answer))
+
+            print(f"  Q{i+1}: hit_rate={hit_rate:.2%} "
+                  f"faithfulness={chat_faithfulness[-1]:.2%} "
+                  f"relevance={chat_relevance[-1]:.2%} "
+                  f"latency={latency_ms:.0f}ms")
+    else:
+        print("\n=== Phase 2: Skipped (no LLM loaded) ===")
+
+    # ── Summary ──────────────────────────────────────────────────────────
     summary = {
-        'retrieval_hit_rate': float(np.mean(results['retrieval_hit_rates'])),
-        'faithfulness': float(np.mean(results['faithfulness_scores'])),
-        'answer_relevance': float(np.mean(results['answer_relevance_scores'])),
-        'latency_p95_ms': float(np.percentile(results['latency_ms'], 95)),
+        'retrieval_hit_rate': avg_retrieval,
+        'faithfulness': (sum(chat_faithfulness) / len(chat_faithfulness)
+                         if chat_faithfulness else 0.0),
+        'answer_relevance': (sum(chat_relevance) / len(chat_relevance)
+                             if chat_relevance else 0.0),
+        'latency_p95_ms': (float(sorted(chat_latency)[int(len(chat_latency) * 0.95)])
+                           if chat_latency else 0.0),
     }
 
-    print(f"\n=== Evaluation Results ===")
+    print("\n=== Evaluation Results ===")
     print(f"  Retrieval Hit Rate: {summary['retrieval_hit_rate']:.2%}")
     print(f"  Faithfulness:       {summary['faithfulness']:.2%}")
     print(f"  Answer Relevance:   {summary['answer_relevance']:.2%}")
     print(f"  Latency p95:        {summary['latency_p95_ms']:.0f}ms")
 
     thresholds = json.loads(THRESHOLDS_FILE.read_text())
-    print(f"\n=== Thresholds ===")
+    print("\n=== Thresholds ===")
     for k, v in thresholds.items():
-        print(f"  {k}: {v}")
+        status = ""
+        if k in summary:
+            val = summary[k]
+            if k.endswith('_ms'):
+                ok = val <= v
+            else:
+                ok = val >= v
+            status = " ✓" if ok else " ✗"
+        print(f"  {k}: {v}{status}")
 
-    passed = all(
-        summary.get(k, 0) >= v if not k.endswith('_ms') else summary.get(k, float('inf')) <= v
-        for k, v in thresholds.items()
-    )
+    # Only enforce thresholds that apply to the current run
+    checks = {}
+    for k, v in thresholds.items():
+        if k not in summary:
+            continue
+        val = summary[k]
+        if k.endswith('_ms'):
+            checks[k] = val <= v
+        else:
+            checks[k] = val >= v
 
+    passed = all(checks.values()) if checks else False
     print(f"\n  {'PASS' if passed else 'FAIL'}")
     return 0 if passed else 1
 
 
 def main():
-    import asyncio
     import argparse
     parser = argparse.ArgumentParser(description='Run Hearth evaluation harness')
     parser.add_argument('--url', default='http://localhost:8765', help='Backend URL')
-    parser.add_argument('--upload', action='store_true', help='Upload test documents before eval')
+    parser.add_argument('--upload', action='store_true',
+                        help='Upload test documents before eval')
     args = parser.parse_args()
 
     sys.exit(asyncio.run(run_eval(args.url, args.upload)))

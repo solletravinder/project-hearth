@@ -162,8 +162,13 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
         "You are Hearth, a private, offline AI notes & research assistant. "
         "Answer the user's question based strictly on the provided context."
     )
+    citation_instruction = (
+        "\n\nWhen your answer draws from a provided source, cite it inline "
+        "using the format [Source N] where N is the source number "
+        "(e.g. [Source 1], [Source 2]). Always cite every source you use."
+    )
     system_msg = (
-        f"{base_system_prompt}\n\nContext:\n{context_str}"
+        f"{base_system_prompt}{citation_instruction}\n\nContext:\n{context_str}"
         if context_str
         else base_system_prompt
     )

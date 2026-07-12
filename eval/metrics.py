@@ -1,5 +1,4 @@
 """Metrics calculations for Hearth evaluation."""
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
@@ -12,7 +11,10 @@ def retrieval_hit_rate(predicted_chunks, golden_chunks, top_k=10):
 
 def faithfulness(claims, supporting_chunks):
     """What % of claims are supported by retrieved chunks."""
-    supported = sum(1 for c in claims if any(supports_claim(c, chunk) for chunk in supporting_chunks))
+    supported = sum(
+        1 for c in claims
+        if any(supports_claim(c, chunk) for chunk in supporting_chunks)
+    )
     return supported / len(claims) if claims else 0.0
 
 
