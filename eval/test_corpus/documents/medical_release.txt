@@ -1,0 +1,16 @@
+MEDICAL RECORDS RELEASE AUTHORIZATION
+
+Patient: Jane Smith
+DOB: March 15, 1980
+Authorization Date: February 1, 2025
+
+I hereby authorize Mercy General Hospital to release my medical records to:
+- Recipient: Dr. Robert Chen, Cardiologist
+- Purpose: Continuity of care for hypertension management
+- Records to Release: Lab results (Jan 2024 - present), EKG reports, medication list
+- Expiration: This authorization expires on August 1, 2025
+
+Signature: _________________________
+Date: February 1, 2025
+
+Witness: _________________________

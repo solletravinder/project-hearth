@@ -1,0 +1,24 @@
+TAX RETURN SUMMARY 2024
+
+Taxpayer: Michael Johnson
+SSN: ***-**-1234
+Filing Status: Single
+Tax Year: 2024
+
+Income:
+- Wages (W-2): $85,000
+- Interest Income: $1,200
+- Dividend Income: $3,500
+Total Income: $89,700
+
+Deductions:
+- Standard Deduction: $14,600
+- Total Deductions: $14,600
+
+Taxable Income: $75,100
+Tax Liability: $11,825
+Withholding: $13,200
+Refund: $1,375
+
+Prepared by: Liberty Tax Services
+Date: March 15, 2025

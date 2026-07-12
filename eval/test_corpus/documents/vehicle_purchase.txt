@@ -1,0 +1,28 @@
+VEHICLE PURCHASE AGREEMENT
+
+Buyer: Sarah Williams
+Seller: Metro Auto Group
+Date: November 10, 2024
+
+Vehicle: 2024 Toyota Camry LE
+VIN: 4T1B11HK5RU123456
+Mileage: 15 miles
+Color: Celestial Silver Metallic
+
+Price: $28,500
+Documentation Fee: $495
+Sales Tax (8.25%): $2,395.13
+License/Title: $250
+Total: $31,640.13
+
+Down Payment: $5,000
+Loan Amount: $26,640.13
+APR: 4.99%
+Term: 60 months
+Monthly Payment: $502.34
+
+Warranty: 3-year/36,000-mile basic, 5-year/60,000-mile powertrain
+
+Buyer: _________________
+Seller: _________________
+Date: November 10, 2024
