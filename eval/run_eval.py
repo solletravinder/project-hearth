@@ -100,7 +100,7 @@ async def wait_for_documents_ready(url, timeout=120):
 async def search_documents(url, query):
     """Search via /api/search/ and return result document titles."""
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.get(f'{url}/api/search/', params={'q': query, 'doc_type': 'document'})
+        resp = await client.get(f'{url}/api/search/', params={'q': query})
         resp.raise_for_status()
         data = resp.json()
         return data.get('results', [])
@@ -171,8 +171,9 @@ async def run_eval(url, do_upload):
         )
         retrieval_results.append(hit_rate)
 
+        top_score = f"{scores[0]:.4f}" if scores else "N/A"
         print(f"  Q{i+1}: hit_rate={hit_rate:.2%} "
-              f"top_score={scores[0]:.4f} latency={latency_ms:.0f}ms"
+              f"top_score={top_score} latency={latency_ms:.0f}ms"
               f" docs={[d for d in predicted_docs[:3]]}")
 
     avg_retrieval = sum(retrieval_results) / len(retrieval_results)
