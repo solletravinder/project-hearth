@@ -97,7 +97,7 @@ export function DownloadProgress({ models, onComplete }: DownloadProgressProps) 
               <span>{m}</span>
               <span>{i < activeIndex ? '✅' : i === activeIndex ? `${percent}%` : '⏳'}</span>
             </div>
-            {i === activeIndex && p.downloaded > 0 && (
+            {i === activeIndex && p && p.downloaded > 0 && (
               <div className="mt-2 bg-gray-200 rounded-full h-2">
                 <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${percent}%` }} />
               </div>
