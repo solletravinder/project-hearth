@@ -1,0 +1,22 @@
+LEASE AGREEMENT
+
+This lease agreement is entered between:
+- Landlord: ABC Properties Inc.
+- Tenant: John Doe
+
+Property: 123 Main Street, Apt 4B
+Term: January 1, 2025 - December 31, 2025
+Rent: $2,500/month
+Security Deposit: $5,000
+Utilities: Tenant responsible for electricity, gas, internet
+
+Maintenance: Landlord responsible for structural repairs, plumbing, HVAC.
+Tenant responsible for minor repairs under $100.
+
+Early Termination: 60 days notice required. Penalty: 2 months rent.
+
+Signatures:
+_________________     _________________
+Landlord              Tenant
+
+Date: January 1, 2025

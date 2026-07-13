@@ -1,0 +1,28 @@
+- generic [ref=f4e3]:
+  - banner [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - img "Hearth" [ref=f4e6]: 🔥
+      - generic [ref=f4e7]: Hearth
+    - generic [ref=f4e8]:
+      - button "Search" [ref=f4e9] [cursor=pointer]
+      - button "Toggle PII filter" [ref=f4e12] [cursor=pointer]
+      - button "Settings" [ref=f4e15] [cursor=pointer]
+  - generic [ref=f4e19]:
+    - complementary [ref=f4e20]:
+      - generic [ref=f4e21] [cursor=pointer]:
+        - generic [ref=f4e22]: Documents
+        - paragraph [ref=f4e27]: No documents yet
+      - generic [ref=f4e28] [cursor=pointer]:
+        - generic [ref=f4e29]: Notes
+        - paragraph [ref=f4e34]: No notes yet
+      - generic [ref=f4e35] [cursor=pointer]:
+        - generic [ref=f4e36]: Chats
+        - paragraph [ref=f4e41]: No conversations yet
+    - main [ref=f4e42]:
+      - generic [ref=f4e44]:
+        - heading "Documents" [level=2] [ref=f4e46]
+        - generic [ref=f4e47]: Click to upload or drag and dropPDF, images, audio, text
+        - status "Loading" [ref=f4e52]
+  - contentinfo [ref=f4e53]:
+    - generic "No model loaded" [ref=f4e54]: "Model: No model loaded"
+    - generic [ref=f4e55]: PII ON

@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  backend:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hearth
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type check
+        run: uv run mypy app/
+
+      - name: Run tests
+        run: uv run pytest tests/ -v
+
+  frontend:
+    name: Frontend (Node.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hearth/static/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: hearth/static/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  eval:
+    name: Evaluation Harness
+    runs-on: ubuntu-latest
+    needs: [backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install backend deps (with local-llm extra)
+        working-directory: hearth
+        run: uv sync --all-extras
+
+      - name: Install eval dependencies
+        run: |
+          pip install sentence-transformers scikit-learn httpx2 numpy
+
+      # ── Download model ─────────────────────────────────────────────────
+      - name: Cache LLM model
+        id: cache-model
+        uses: actions/cache@v4
+        with:
+          path: hearth/models
+          key: llama-3.2-1b-instruct-q4km
+
+      - name: Download Llama-3.2-1B-Instruct GGUF
+        if: steps.cache-model.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p hearth/models
+          curl -sL "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf" \
+            -o hearth/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf
+
+      # ── Start services ─────────────────────────────────────────────────
+      - name: Start backend
+        working-directory: hearth
+        env:
+          HEARTH_CHAT_PROVIDER: local
+          HEARTH_DEFAULT_MODEL: Llama-3.2-1B-Instruct-Q4_K_M
+        run: |
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 8765 &
+          sleep 15
+
+      - name: Run evaluation
+        working-directory: eval
+        run: python run_eval.py --upload

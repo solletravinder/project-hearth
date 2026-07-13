@@ -1,0 +1,6 @@
+{
+  "retrieval_hit_rate": 0.85,
+  "faithfulness": 0.90,
+  "answer_relevance": 0.70,
+  "latency_p95_ms": 30000
+}

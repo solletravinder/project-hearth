@@ -1,0 +1,62 @@
+[
+  {
+    "question": "What is the coverage limit mentioned in the insurance letter?",
+    "answer": "The coverage limit is $50,000 per incident.",
+    "relevant_documents": ["insurance_letter.txt"],
+    "claims": ["The coverage limit is $50,000 per incident"]
+  },
+  {
+    "question": "When does the lease contract expire?",
+    "answer": "The lease contract expires on December 31, 2025.",
+    "relevant_documents": ["lease_contract.txt"],
+    "claims": ["Contract expires December 31, 2025"]
+  },
+  {
+    "question": "What is the monthly rent in the lease agreement?",
+    "answer": "The monthly rent is $2,500.",
+    "relevant_documents": ["lease_contract.txt"],
+    "claims": ["Monthly rent is $2,500"]
+  },
+  {
+    "question": "What is the annual deductible for the insurance plan?",
+    "answer": "The annual deductible is $1,000.",
+    "relevant_documents": ["insurance_letter.txt"],
+    "claims": ["Annual deductible is $1,000"]
+  },
+  {
+    "question": "Who is the landlord in the lease agreement?",
+    "answer": "The landlord is ABC Properties Inc.",
+    "relevant_documents": ["lease_contract.txt"],
+    "claims": ["Landlord is ABC Properties Inc."]
+  },
+  {
+    "question": "What is the credit card statement's new balance?",
+    "answer": "The new balance is $2,214.23.",
+    "relevant_documents": ["credit_card_statement.txt"],
+    "claims": ["New balance is $2,214.23"]
+  },
+  {
+    "question": "What position was offered in the employment offer letter?",
+    "answer": "The position offered is Senior Software Engineer.",
+    "relevant_documents": ["employment_offer.txt"],
+    "claims": ["Position is Senior Software Engineer"]
+  },
+  {
+    "question": "What is the vehicle purchase price in the vehicle agreement?",
+    "answer": "The vehicle purchase price is $28,500.",
+    "relevant_documents": ["vehicle_purchase.txt"],
+    "claims": ["The vehicle purchase price is $28,500"]
+  },
+  {
+    "question": "What is the tax refund amount in the tax return?",
+    "answer": "The tax refund is $1,375.",
+    "relevant_documents": ["tax_return.txt"],
+    "claims": ["Tax refund is $1,375"]
+  },
+  {
+    "question": "Which hospital authorized the medical records release?",
+    "answer": "Mercy General Hospital authorized the medical records release.",
+    "relevant_documents": ["medical_release.txt"],
+    "claims": ["Mercy General Hospital authorized release"]
+  }
+]

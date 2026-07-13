@@ -1,8 +1,6 @@
-# 🔥 Hearth — Fully Offline, On-Device AI Notes & Research Assistant
+# Hearth — Fully Offline, On-Device AI Notes & Research Assistant
 
-**Drop in PDFs, receipts, voice memos, or typed notes. Ask questions. Get cited answers. Nothing ever leaves your machine.**
-
----
+Drop in PDFs, receipts, voice memos, or typed notes. Ask questions. Get cited answers. Nothing ever leaves your machine.
 
 ## What Makes Hearth Different
 
@@ -86,17 +84,21 @@ First run walks you through a system check and model download (~2-5 minutes depe
 
 ```bash
 # Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+cd hearth
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8765
 
-# Frontend (separate terminal)
-cd frontend
+# Frontend (separate terminal, for dev)
+cd hearth/static/frontend
 npm install
 npm run dev
 # Open http://localhost:5173
+
+# Or use the startup script (builds React + starts server):
+.\scripts\start.ps1        # Windows
+./scripts/start.sh         # Linux/macOS
 ```
 
 ## Features
@@ -126,9 +128,9 @@ npm run dev
 - **Command palette** — `Ctrl+K` for everything
 - **Dark mode** — Respects system preference
 - **Keyboard navigation** — Every action reachable via keyboard
-- **Trace inspector** — Visual DAG of every pipeline run (Langfuse-style)
-- **Model management** — Download, switch, and unload models without restart
-- **Backup/Restore** — Export everything to a single archive file
+- **Trace inspector** — Visual logs and system traces fetched from the trace database with pagination and level filters
+- **Model management** — Stream-download models, switch between profiles, and unload models instantly with full SSE download progress tracking
+- **Backup/Restore** — Export everything to a single archive file, or download individual documents directly as raw files
 
 ## Keyboard Shortcuts
 
@@ -149,38 +151,41 @@ npm run dev
 
 ```
 hearth/
-├── backend/          # Python FastAPI server
-│   ├── app/
-│   │   ├── api/      # REST endpoints
-│   │   ├── models/   # ML model wrappers
-│   │   ├── pipeline/ # LangGraph workflows
-│   │   ├── storage/  # Database + file store
-│   │   └── core/     # Utilities (chunking, PII)
-│   └── tests/
-├── frontend/         # React + Vite SPA
-│   └── src/
-│       ├── components/  # React components (by domain)
-│       ├── hooks/       # Custom hooks
-│       ├── store/       # Zustand stores
-│       └── api/         # API client
-├── eval/             # CI eval harness + test corpus
-├── scripts/          # Utility scripts
-└── docker-compose.yml
+├── .github/workflows/       # CI (backend + frontend)
+├── app/
+│   ├── api/                 # REST routers + Pydantic schemas
+│   ├── services/            # Business logic layer
+│   ├── models/              # ML model wrappers (whisper, trocr, embedding, ner)
+│   ├── providers/           # Pluggable provider abstraction (ollama, openai, local, mock)
+│   ├── pipeline/            # LangGraph ingestion workflows
+│   ├── storage/             # SQLite schema, DB connection, repos, file store
+│   └── core/                # Utilities (chunking, PII)
+├── static/
+│   └── frontend/            # React + Vite SPA
+│       ├── src/
+│       │   ├── api/         # Fetch client
+│       │   ├── store/       # Zustand stores
+│       │   ├── hooks/       # React hooks
+│       │   ├── components/  # UI by domain
+│       │   └── types/       # TypeScript interfaces
+│       └── ...
+├── scripts/                 # Dev & startup scripts
+├── tests/                   # Backend unit + e2e tests
+│   ├── e2e/                 # Journey-level tests
+│   └── ...
+├── data/                    # Runtime data (DB, uploads)
+└── pyproject.toml
 ```
 
 ### Running Tests
 
 ```bash
 # Backend tests
-cd backend
-pytest tests/ -v --cov=app
-
-# CI eval harness
-cd eval
-python run_eval.py --corpus test_corpus/ --backend-python ../backend
+cd hearth
+pytest tests/ -v
 
 # Frontend checks
-cd frontend
+cd hearth/static/frontend
 npm run lint
 npm run typecheck
 ```
@@ -188,55 +193,8 @@ npm run typecheck
 ## CI Pipeline
 
 Every push runs:
-1. **Unit tests** — Chunking, PII, repositories
-2. **Integration tests** — API endpoints, ingest pipeline, query pipeline
-3. **Eval harness** — Retrieval hit rate, faithfulness, PII precision/recall, latency
-4. **Lint + type-check** — ESLint and TypeScript strict mode
-
-If eval metrics drop below thresholds, CI fails. Full results uploaded as artifacts.
-
-## Architecture at a Glance
-
-```mermaid
-sequenceDiagram
-    participant U as You
-    participant F as Frontend (React)
-    participant B as Backend (FastAPI)
-    participant M as Models (Local)
-    participant D as Database (SQLite)
-
-    U->>F: Upload file
-    F->>B: POST /api/documents/upload
-    B->>M: Extract text (OCR/ASR)
-    B->>M: Chunk & Embed
-    B->>D: Store chunks + vectors
-    B-->>F: Ready
-
-    U->>F: Ask question
-    F->>B: POST /api/chat (SSE)
-    B->>M: Embed query
-    B->>D: Hybrid search (vec + FTS)
-    B->>M: Generate answer
-    B->>M: Verify citations
-    B-->>F: Tokens stream + verified citations
-    F-->>U: Rendered answer
-```
-
-## Design Document
-
-Full design specification is at:
-[`docs/superpowers/specs/2026-07-01-hearth-design.md`](docs/superpowers/specs/2026-07-01-hearth-design.md)
-
-Includes:
-- Complete Mermaid architecture diagrams
-- Data model ERD
-- LangGraph pipeline workflows
-- API reference (40+ endpoints)
-- UI component tree with all states
-- Error handling matrix
-- Testing strategy + CI eval metrics
-- Docker deployment architecture
-- Implementation phasing (20 days)
+1. **Backend** — ruff lint, mypy, pytest on Ubuntu with Python 3.11
+2. **Frontend** — npm ci, ESLint, TypeScript strict, Vite build
 
 ## License
 

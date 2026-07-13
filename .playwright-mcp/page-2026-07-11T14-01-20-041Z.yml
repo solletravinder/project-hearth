@@ -1,0 +1,24 @@
+- generic [ref=f8e3]:
+  - banner [ref=f8e4]:
+    - generic [ref=f8e5]:
+      - img "Hearth" [ref=f8e6]: 🔥
+      - generic [ref=f8e7]: Hearth
+    - generic [ref=f8e8]:
+      - button "Search" [ref=f8e9] [cursor=pointer]
+      - button "Toggle PII filter" [ref=f8e12] [cursor=pointer]
+      - button "Settings" [ref=f8e15] [cursor=pointer]
+  - generic [ref=f8e19]:
+    - complementary [ref=f8e20]:
+      - generic [ref=f8e21] [cursor=pointer]:
+        - generic [ref=f8e22]: Documents
+        - paragraph [ref=f8e27]: No documents yet
+      - generic [ref=f8e28] [cursor=pointer]:
+        - generic [ref=f8e29]: Notes
+        - paragraph [ref=f8e34]: No notes yet
+      - generic [ref=f8e35] [cursor=pointer]:
+        - generic [ref=f8e36]: Chats
+        - paragraph [ref=f8e41]: No conversations yet
+    - main [ref=f8e42]
+  - contentinfo [ref=f8e47]:
+    - generic "No model loaded" [ref=f8e48]: "Model: No model loaded"
+    - generic [ref=f8e49]: PII OFF

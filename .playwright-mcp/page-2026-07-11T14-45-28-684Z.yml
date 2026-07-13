@@ -1,0 +1,32 @@
+- generic [ref=f11e2]:
+  - generic [ref=f11e3]:
+    - banner [ref=f11e4]:
+      - generic [ref=f11e5]:
+        - img "Hearth" [ref=f11e6]: 🔥
+        - generic [ref=f11e7]: Hearth
+      - generic [ref=f11e8]:
+        - button "Search" [ref=f11e9] [cursor=pointer]
+        - button "Toggle PII filter" [ref=f11e12] [cursor=pointer]
+        - button "Settings" [ref=f11e15] [cursor=pointer]
+    - generic [ref=f11e19]:
+      - complementary [ref=f11e20]:
+        - generic [ref=f11e22] [cursor=pointer]:
+          - generic [ref=f11e26]: Documents
+          - generic [ref=f11e46]: "6"
+        - generic [ref=f11e29] [cursor=pointer]:
+          - generic [ref=f11e33]: Notes
+          - generic [ref=f11e47]: "4"
+        - generic [ref=f11e35] [cursor=pointer]:
+          - generic [ref=f11e36]: Chats
+          - paragraph [ref=f11e41]: No conversations yet
+      - main [ref=f11e42]
+    - contentinfo [ref=f11e43]:
+      - generic "No model loaded" [ref=f11e44]: "Model: No model loaded"
+      - generic [ref=f11e45]: PII ON
+  - generic [ref=f11e50]:
+    - generic [ref=f11e51]:
+      - textbox "Search" [active] [ref=f11e54]:
+        - /placeholder: Search documents, notes, conversations...
+        - text: document
+      - generic [ref=f11e55]: ESC
+    - generic [ref=f11e56]: Type to search across documents, notes, and conversations.

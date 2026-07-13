@@ -1,0 +1,35 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img "Hearth" [ref=e6]: 🔥
+      - generic [ref=e7]: Hearth
+    - generic [ref=e8]:
+      - button "Search" [ref=e9] [cursor=pointer]
+      - button "Toggle PII filter" [ref=e12] [cursor=pointer]
+      - button "Settings" [ref=e15] [cursor=pointer]
+  - generic [ref=e19]:
+    - complementary [ref=e20]:
+      - generic [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Documents
+        - paragraph [ref=e27]: No documents yet
+      - generic [ref=e28] [cursor=pointer]:
+        - generic [ref=e29]: Notes
+        - paragraph [ref=e34]: No notes yet
+      - generic [ref=e35] [cursor=pointer]:
+        - generic [ref=e36]: Chats
+        - paragraph [ref=e41]: No conversations yet
+    - main [ref=e42]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e84]:
+            - paragraph [ref=e85]: What is Hearth?
+            - generic [ref=e86]: Just now
+          - generic [ref=e87]: "{\"detail\":\"Method Not Allowed\"}"
+        - generic [ref=e72]:
+          - button "Attach" [ref=e73] [cursor=pointer]
+          - textbox "Ask anything... (Ctrl+Enter to send)" [active] [ref=e76]
+          - button "Voice" [ref=e77] [cursor=pointer]
+          - button "Send" [ref=e80] [cursor=pointer]
+  - contentinfo [ref=e60]:
+    - generic "No model loaded" [ref=e61]: "Model: No model loaded"
+    - generic [ref=e62]: PII OFF

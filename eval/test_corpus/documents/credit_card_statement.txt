@@ -1,0 +1,34 @@
+CREDIT CARD STATEMENT
+
+Account: **** **** **** 4587
+Statement Period: December 1, 2024 - December 31, 2024
+Due Date: January 25, 2025
+
+Previous Balance: $1,245.30
+Payments: -$1,245.30
+Credits: $0.00
+Purchases: +$2,156.78
+Cash Advances: $0.00
+Fees: +$39.00
+Interest: +$18.45
+New Balance: $2,214.23
+
+Minimum Payment Due: $66.00
+Credit Limit: $15,000
+Available Credit: $12,785.77
+
+Transactions:
+12/02  Amazon.com           $89.99
+12/05  Whole Foods Market   $142.35
+12/08  Shell Gas Station    $65.00
+12/12  Target               $234.67
+12/15  Netflix              $15.49
+12/18  Apple App Store      $4.99
+12/22  Costco Wholesale     $312.84
+12/25  Uber                 $24.50
+12/28  Local Restaurant     $87.95
+12/30  Annual Fee           $39.00
+12/31  Interest Charge      $18.45
+
+Rewards Earned This Period: 2,157 points
+Total Rewards Balance: 15,423 points
