@@ -184,6 +184,7 @@ async def run_eval(url, do_upload):
     chat_latency = []
     chat_faithfulness = []
     chat_relevance = []
+    faithfulness_skipped = 0  # queries with no citations (can't evaluate)
 
     if has_llm:
         print("\n=== Phase 2: Chat Pipeline ===")
@@ -211,11 +212,19 @@ async def run_eval(url, do_upload):
                 / len(golden_docs) if golden_docs else 0.0
             )
 
-            chat_faithfulness.append(faithfulness(claims, citation_texts))
+            # Only compute faithfulness when citations were extracted;
+            # an empty list means the LLM didn't emit [Source N] markers.
+            if citation_texts:
+                chat_faithfulness.append(faithfulness(claims, citation_texts))
+            else:
+                faithfulness_skipped += 1
+
             chat_relevance.append(answer_relevance_score(query, answer))
 
+            faith_str = (f"{chat_faithfulness[-1]:.2%}"
+                         if citation_texts else "N/A (no citations)")
             print(f"  Q{i+1}: hit_rate={hit_rate:.2%} "
-                  f"faithfulness={chat_faithfulness[-1]:.2%} "
+                  f"faithfulness={faith_str} "
                   f"relevance={chat_relevance[-1]:.2%} "
                   f"latency={latency_ms:.0f}ms")
     else:
@@ -235,9 +244,16 @@ async def run_eval(url, do_upload):
     print("\n=== Evaluation Results ===")
     print(f"  Retrieval Hit Rate: {summary['retrieval_hit_rate']:.2%}")
     if 'faithfulness' in summary:
-        print(f"  Faithfulness:       {summary['faithfulness']:.2%}")
+        skip_note = ""
+        if faithfulness_skipped:
+            skip_note = f"  ({faithfulness_skipped}/{len(golden)} skipped, no citations)"
+        print(f"  Faithfulness:       {summary['faithfulness']:.2%}{skip_note}")
         print(f"  Answer Relevance:   {summary['answer_relevance']:.2%}")
         print(f"  Latency p95:        {summary['latency_p95_ms']:.0f}ms")
+    elif has_llm:
+        print("  Faithfulness:       N/A (LLM produced no citations)")
+        print(f"  Answer Relevance:   {sum(chat_relevance) / len(chat_relevance):.2%}")
+        print(f"  Latency p95:        {float(sorted(chat_latency)[int(len(chat_latency) * 0.95)]):.0f}ms")
     else:
         print("  Faithfulness:       N/A (no LLM)")
         print("  Answer Relevance:   N/A (no LLM)")
@@ -253,7 +269,7 @@ async def run_eval(url, do_upload):
                 ok = val <= v
             else:
                 ok = val >= v
-            status = " ✓" if ok else " ✗"
+            status = " [OK]" if ok else " [FAIL]"
         print(f"  {k}: {v}{status}")
 
     # Only enforce thresholds that apply to the current run
