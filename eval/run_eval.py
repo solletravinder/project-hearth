@@ -52,8 +52,34 @@ def parse_sse_response(response_text):
     return answer, citations
 
 
+async def clear_eval_folder(url):
+    """Delete all existing eval-folder documents to start fresh.
+
+    Also cleans up stale test artifacts (test.pdf, empty.txt) that
+    previous test or dev runs may have left in the search index.
+    """
+    STALE_TITLES = frozenset({'test.pdf', 'empty.txt'})
+    async with httpx2.AsyncClient(timeout=30.0) as client:
+        # Clean eval-folder documents
+        resp = await client.get(f'{url}/api/documents/', params={'folder': 'eval'})
+        if resp.status_code == 200:
+            for doc in resp.json().get('items', []):
+                doc_id = doc['id']
+                await client.delete(f'{url}/api/documents/{doc_id}')
+                print(f"  Removed old doc: {doc.get('title', '?')} ({doc_id[:8]}...)")
+
+        # Also clean stale test artifacts (from earlier manual runs)
+        resp = await client.get(f'{url}/api/documents/', params={'per_page': 100})
+        if resp.status_code == 200:
+            for doc in resp.json().get('items', []):
+                if doc.get('title', '') in STALE_TITLES:
+                    await client.delete(f'{url}/api/documents/{doc["id"]}')
+                    print(f"  Removed stale artifact: {doc['title']} ({doc['id'][:8]}...)")
+
+
 async def upload_documents(url):
     """Upload all test documents to the backend."""
+    await clear_eval_folder(url)
     async with httpx2.AsyncClient(timeout=60.0) as client:
         for doc_file in sorted(DOCUMENTS_DIR.glob('*.txt')):
             with open(doc_file, 'rb') as f:
@@ -111,7 +137,7 @@ async def run_query(url, query):
     async with httpx2.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             f'{url}/api/chat/',
-            json={'query': query}
+            json={'query': query, 'max_tokens': 128}
         )
         resp.raise_for_status()
         answer, citations = parse_sse_response(resp.text)

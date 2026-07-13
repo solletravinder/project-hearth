@@ -27,7 +27,7 @@
     "question": "Who is the landlord in the lease agreement?",
     "answer": "The landlord is ABC Properties Inc.",
     "relevant_documents": ["lease_contract.txt"],
-    "claims": ["Landland is ABC Properties Inc."]
+    "claims": ["Landlord is ABC Properties Inc."]
   },
   {
     "question": "What is the credit card statement's new balance?",
@@ -45,7 +45,7 @@
     "question": "What is the vehicle purchase price in the vehicle agreement?",
     "answer": "The vehicle purchase price is $28,500.",
     "relevant_documents": ["vehicle_purchase.txt"],
-    "claims": ["Purchase price is $28,500"]
+    "claims": ["The vehicle purchase price is $28,500"]
   },
   {
     "question": "What is the tax refund amount in the tax return?",

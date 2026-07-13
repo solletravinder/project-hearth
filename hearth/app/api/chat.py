@@ -212,7 +212,7 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
     chunks = await perform_hybrid_search(
         q=query,
         document_ids=body.context_docs,
-        limit=5
+        limit=10
     )
 
     searching_msg = json.dumps({"status": "searching", "documents": len(chunks)})
@@ -267,7 +267,7 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
                 messages=provider_messages,
                 model=settings.default_model,
                 temperature=float(db_settings.get("temperature", 0.7)),
-                max_tokens=int(db_settings.get("max_tokens", 2048)),
+                max_tokens=body.max_tokens or int(db_settings.get("max_tokens", 2048)),
             ):
                 response_text += token
                 token_count += 1

@@ -131,6 +131,7 @@ class ChatRequest(BaseModel):
     query: str
     conversation_id: str | None = None
     context_docs: list[str] | None = None
+    max_tokens: int | None = None
 
 
 class ChatResponse(BaseModel):
