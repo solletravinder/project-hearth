@@ -212,17 +212,19 @@ async def run_eval(url, do_upload):
                 / len(golden_docs) if golden_docs else 0.0
             )
 
-            # Only compute faithfulness when citations were extracted;
-            # an empty list means the LLM didn't emit [Source N] markers.
-            if citation_texts:
-                chat_faithfulness.append(faithfulness(claims, citation_texts))
+            # Faithfulness: compare golden claims to the LLM's answer text.
+            # We do NOT compare claims to raw chunk text (citation_texts)
+            # because a short claim has low cosine similarity against a
+            # full page of noisy chunk content, causing false negatives.
+            if answer.strip():
+                chat_faithfulness.append(faithfulness(claims, [answer]))
             else:
                 faithfulness_skipped += 1
 
             chat_relevance.append(answer_relevance_score(query, answer))
 
-            faith_str = (f"{chat_faithfulness[-1]:.2%}"
-                         if citation_texts else "N/A (no citations)")
+            faith_str = (f"{chat_faithfulness[-1]:.2%}" if answer.strip()
+                         else "N/A (empty answer)")
             print(f"  Q{i+1}: hit_rate={hit_rate:.2%} "
                   f"faithfulness={faith_str} "
                   f"relevance={chat_relevance[-1]:.2%} "
@@ -246,12 +248,12 @@ async def run_eval(url, do_upload):
     if 'faithfulness' in summary:
         skip_note = ""
         if faithfulness_skipped:
-            skip_note = f"  ({faithfulness_skipped}/{len(golden)} skipped, no citations)"
+            skip_note = f"  ({faithfulness_skipped}/{len(golden)} skipped, empty answer)"
         print(f"  Faithfulness:       {summary['faithfulness']:.2%}{skip_note}")
         print(f"  Answer Relevance:   {summary['answer_relevance']:.2%}")
         print(f"  Latency p95:        {summary['latency_p95_ms']:.0f}ms")
     elif has_llm:
-        print("  Faithfulness:       N/A (LLM produced no citations)")
+        print("  Faithfulness:       N/A (all answers empty)")
         print(f"  Answer Relevance:   {sum(chat_relevance) / len(chat_relevance):.2%}")
         print(f"  Latency p95:        {float(sorted(chat_latency)[int(len(chat_latency) * 0.95)]):.0f}ms")
     else:

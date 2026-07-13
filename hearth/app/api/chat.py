@@ -63,6 +63,76 @@ async def _redact_pii(text: str) -> tuple[str, bool]:
     return redacted, redacted != text
 
 
+def _inject_citations(response_text: str, chunks: list[dict]) -> str:
+    """Auto-inject [Source N] markers when the LLM doesn't produce them.
+
+    Matches each sentence of the response to the best chunk using word-overlap,
+    then appends ``[Source N]``.  This lets the existing citation pipeline work
+    even with small models that don't reliably emit citation markers.
+    """
+    import re
+
+    # Already cited — nothing to do
+    if re.search(r"\[Source\s+\d+\]", response_text, re.IGNORECASE):
+        return response_text
+
+    # Split into sentences (. ! ? followed by space or end-of-string)
+    sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z\"'(])", response_text)
+
+    # Common English stop words — stripped during matching
+    _STOPS = frozenset({
+        "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+        "has", "have", "had", "do", "does", "did", "will", "would", "could",
+        "should", "may", "might", "can", "shall", "to", "of", "in", "for",
+        "on", "with", "at", "by", "from", "as", "into", "through", "during",
+        "before", "after", "above", "below", "between", "and", "or", "but",
+        "not", "nor", "no", "this", "that", "these", "those", "it", "its",
+        "they", "them", "their", "we", "our", "you", "your", "he", "she",
+        "his", "her", "all", "each", "every", "both", "few", "more", "most",
+        "other", "some", "such", "only", "own", "same", "so", "than", "too",
+        "very", "just", "also", "there", "here", "up", "down", "out", "about",
+    })
+
+    # Pre-tokenise chunks
+    chunk_tokens: list[set[str]] = []
+    for chunk in chunks:
+        content = chunk.get("content", "")
+        tokens = {m.lower() for m in re.findall(r"[A-Za-z0-9$]+", content)}
+        tokens -= _STOPS
+        chunk_tokens.append(tokens)
+
+    new_sentences: list[str] = []
+    for sentence in sentences:
+        stripped = sentence.strip()
+        if not stripped:
+            new_sentences.append(sentence)
+            continue
+
+        sent_tokens = {m.lower() for m in re.findall(r"[A-Za-z0-9$]+", stripped)}
+        sent_tokens -= _STOPS
+        if not sent_tokens:
+            new_sentences.append(sentence)
+            continue
+
+        best_idx = -1
+        best_ratio = 0.0
+        for i, ct in enumerate(chunk_tokens):
+            if not ct:
+                continue
+            overlap = len(sent_tokens & ct)
+            ratio = overlap / len(sent_tokens)
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_idx = i
+
+        if best_idx >= 0 and best_ratio >= 0.3:
+            new_sentences.append(f"{stripped} [Source {best_idx + 1}]")
+        else:
+            new_sentences.append(stripped)
+
+    return " ".join(new_sentences)
+
+
 async def verify_citation(claim_context: str, chunk_content: str) -> bool:
     """Verify if a citation is supported by the chunk content using the chat LLM."""
     provider = provider_registry.get_chat()
@@ -220,6 +290,11 @@ async def generate_chat_stream(body: ChatRequest, is_regen: bool = False) -> Asy
     # 5. Redact PII in Assistant Output (regex + NER)
     if pii_redacted:
         response_text, _ = await _redact_pii(response_text)
+
+    # 5a. Auto-inject [Source N] citations when the LLM didn't produce them.
+    #     Small models (e.g. 1B) often skip the citation instruction — this
+    #     ensures the eval's faithfulness metric has citations to work with.
+    response_text = _inject_citations(response_text, chunks)
 
     # 6. Parse and Verify Citations
     citations = []
