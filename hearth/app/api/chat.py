@@ -80,7 +80,7 @@ def _inject_citations(response_text: str, chunks: list[dict]) -> str:
     sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z\"'(])", response_text)
 
     # Common English stop words — stripped during matching
-    _STOPS = frozenset({
+    _stops = frozenset({
         "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
         "has", "have", "had", "do", "does", "did", "will", "would", "could",
         "should", "may", "might", "can", "shall", "to", "of", "in", "for",
@@ -98,7 +98,7 @@ def _inject_citations(response_text: str, chunks: list[dict]) -> str:
     for chunk in chunks:
         content = chunk.get("content", "")
         tokens = {m.lower() for m in re.findall(r"[A-Za-z0-9$]+", content)}
-        tokens -= _STOPS
+        tokens -= _stops
         chunk_tokens.append(tokens)
 
     new_sentences: list[str] = []
@@ -109,7 +109,7 @@ def _inject_citations(response_text: str, chunks: list[dict]) -> str:
             continue
 
         sent_tokens = {m.lower() for m in re.findall(r"[A-Za-z0-9$]+", stripped)}
-        sent_tokens -= _STOPS
+        sent_tokens -= _stops
         if not sent_tokens:
             new_sentences.append(sentence)
             continue
